@@ -1,0 +1,65 @@
+resources:
+  - ../../base
+patches:
+  - target: { kind: VirtualService, name: demo }
+    patch: |-
+      - op: replace
+        path: /spec/hosts
+        value: [app.prod.internal]
+  - target: { kind: Deployment, name: loadgen }
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env/0/value
+        value: app.prod.internal
+  # Slower canary in prod.
+  - target: { kind: Rollout, name: demo }
+    patch: |-
+      - op: replace
+        path: /spec/strategy/canary/analysis/startingStep
+        value: 8
+      - op: replace
+        path: /spec/strategy/canary/steps
+        value:
+          - setCanaryScale:
+              replicas: 1
+          - setMirrorRoute:
+              name: mirror-api
+              percentage: 100
+              match:
+                - method: { exact: GET }
+                  path: { prefix: /api/work }
+          # 3m of mirroring in total; mirror-health judges the last minute.
+          - pause: { duration: 2m }
+          - analysis:
+              templates:
+                - templateName: mirror-health
+              args:
+                - name: canary-hash
+                  valueFrom:
+                    podTemplateHashValue: Latest
+          - setMirrorRoute:
+              name: mirror-api
+          - setCanaryScale:
+              matchTrafficWeight: true
+          # Real users here: 10% each, so the canary is never shown to more
+          # users than the first canary step (setWeight 10).
+          - experiment:
+              duration: 5m
+              templates:
+                - name: baseline
+                  specRef: stable
+                  replicas: 1
+                  weight: 10
+                  service: { name: demo-exp-baseline }
+                - name: canary
+                  specRef: canary
+                  replicas: 1
+                  weight: 10
+                  service: { name: demo-exp-canary }
+              analyses:
+                - name: compare
+                  templateName: canary-vs-baseline
+          - setWeight: 10
+          - pause: {duration: 5m}
+          - setWeight: 50
+          - pause: {duration: 10m}

@@ -1,0 +1,658 @@
+{
+ "run_id": "s1-f8-r1",
+ "info": {
+  "started_at": "2026-11-01T13:51:35",
+  "app": "demo",
+  "strategy": "s1",
+  "fault": "f8",
+  "image_tag": "f8-wrong-e6d8d31-16",
+  "rep": 1,
+  "notes": "",
+  "git_commit": "27b65bd"
+ },
+ "measurements": {
+  "outcome": "promoted",
+  "bad_hash": "55df85dcff",
+  "stable_hash": "5549f45775",
+  "caught_by": null,
+  "ttd_s": null,
+  "detect_from_start_s": null,
+  "ttr_s": null,
+  "max_exposure_pct": 100.0,
+  "user_exposed_s": 120.0,
+  "release_duration_s": 128.1,
+  "trial_pod_minutes": 2.19,
+  "mirror_s": null,
+  "user": {
+   "total": 188,
+   "5xx": 0,
+   "slow": 0,
+   "window": [
+    1793537498,
+    1793537663
+   ]
+  }
+ },
+ "timeline": {
+  "app": "demo",
+  "kind": "canary",
+  "namespace": "demo",
+  "label": "s1-f8-r1",
+  "clock_skew_s": 0.185,
+  "events": [
+   {
+    "t": 1793537496.69921,
+    "snap": {
+     "rollout": {
+      "phase": "Healthy",
+      "message": null,
+      "abort": false,
+      "step": 4,
+      "current_hash": "5549f45775",
+      "stable_hash": "5549f45775"
+     },
+     "analysis": {
+      "demo-5549f45775-23": {
+       "type": "Background",
+       "phase": "Successful",
+       "message": "Run Terminated",
+       "metrics": {
+        "success-rate": {
+         "phase": "Successful",
+         "count": 4,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:11:17Z"
+        },
+        "latency-p95": {
+         "phase": "Successful",
+         "count": 4,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:11:17Z"
+        },
+        "memory-growth": {
+         "phase": "Successful",
+         "count": 2,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:11:17Z"
+        }
+       }
+      },
+      "demo-5549f45775-23-2": {
+       "type": "Step",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "mirror-latency-p95": {
+         "phase": "Successful",
+         "count": 3,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:05:50Z"
+        },
+        "mirror-success-rate": {
+         "phase": "Successful",
+         "count": 3,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:05:50Z"
+        }
+       }
+      },
+      "demo-5549f45775-23-5-compare": {
+       "type": "Experiment",
+       "phase": "Successful",
+       "message": "Run Terminated",
+       "metrics": {
+        "error-delta": {
+         "phase": "Successful",
+         "count": 8,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:08:57Z"
+        },
+        "latency-delta": {
+         "phase": "Successful",
+         "count": 8,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:08:57Z"
+        },
+        "memory-delta": {
+         "phase": "Successful",
+         "count": 6,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:08:47Z"
+        }
+       }
+      }
+     },
+     "experiments": {
+      "demo-5549f45775-23-5": "Successful"
+     },
+     "pods": {
+      "demo-5549f45775-brmgf": {
+       "hash": "5549f45775",
+       "ready": true,
+       "created": "2026-11-01T12:09:05Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 100,
+        "demo-canary": 0,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   },
+   {
+    "t": 1793537501.850388,
+    "snap": {
+     "rollout": {
+      "phase": "Healthy",
+      "message": null,
+      "abort": false,
+      "step": 4,
+      "current_hash": "5549f45775",
+      "stable_hash": "5549f45775"
+     },
+     "analysis": {
+      "demo-5549f45775-23": {
+       "type": "Background",
+       "phase": "Successful",
+       "message": "Run Terminated",
+       "metrics": {
+        "success-rate": {
+         "phase": "Successful",
+         "count": 4,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:11:17Z"
+        },
+        "latency-p95": {
+         "phase": "Successful",
+         "count": 4,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:11:17Z"
+        },
+        "memory-growth": {
+         "phase": "Successful",
+         "count": 2,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:11:17Z"
+        }
+       }
+      },
+      "demo-5549f45775-23-2": {
+       "type": "Step",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "mirror-latency-p95": {
+         "phase": "Successful",
+         "count": 3,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:05:50Z"
+        },
+        "mirror-success-rate": {
+         "phase": "Successful",
+         "count": 3,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:05:50Z"
+        }
+       }
+      },
+      "demo-5549f45775-23-5-compare": {
+       "type": "Experiment",
+       "phase": "Successful",
+       "message": "Run Terminated",
+       "metrics": {
+        "error-delta": {
+         "phase": "Successful",
+         "count": 8,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:08:57Z"
+        },
+        "latency-delta": {
+         "phase": "Successful",
+         "count": 8,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:08:57Z"
+        },
+        "memory-delta": {
+         "phase": "Successful",
+         "count": 6,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:08:47Z"
+        }
+       }
+      }
+     },
+     "experiments": {
+      "demo-5549f45775-23-5": "Successful"
+     },
+     "pods": {
+      "demo-5549f45775-brmgf": {
+       "hash": "5549f45775",
+       "ready": true,
+       "created": "2026-11-01T12:09:05Z",
+       "deleting": false
+      },
+      "demo-55df85dcff-jntdq": {
+       "hash": "55df85dcff",
+       "ready": false,
+       "created": "2026-11-01T12:51:41Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 100,
+        "demo-canary": 0,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   },
+   {
+    "t": 1793537505.414124,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "waiting for all steps to complete",
+      "abort": false,
+      "step": 0,
+      "current_hash": "55df85dcff",
+      "stable_hash": "5549f45775"
+     },
+     "analysis": {},
+     "experiments": {},
+     "pods": {
+      "demo-5549f45775-brmgf": {
+       "hash": "5549f45775",
+       "ready": true,
+       "created": "2026-11-01T12:09:05Z",
+       "deleting": false
+      },
+      "demo-55df85dcff-jntdq": {
+       "hash": "55df85dcff",
+       "ready": false,
+       "created": "2026-11-01T12:51:41Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 100,
+        "demo-canary": 0,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   },
+   {
+    "t": 1793537513.454871,
+    "snap": {
+     "rollout": {
+      "phase": "Paused",
+      "message": "CanaryPauseStep",
+      "abort": false,
+      "step": 1,
+      "current_hash": "55df85dcff",
+      "stable_hash": "5549f45775"
+     },
+     "analysis": {
+      "demo-55df85dcff-54": {
+       "type": "Background",
+       "phase": "Running",
+       "message": null,
+       "metrics": {}
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-5549f45775-brmgf": {
+       "hash": "5549f45775",
+       "ready": true,
+       "created": "2026-11-01T12:09:05Z",
+       "deleting": false
+      },
+      "demo-55df85dcff-jntdq": {
+       "hash": "55df85dcff",
+       "ready": true,
+       "created": "2026-11-01T12:51:41Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 90,
+        "demo-canary": 10,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   },
+   {
+    "t": 1793537542.8109848,
+    "snap": {
+     "rollout": {
+      "phase": "Paused",
+      "message": "CanaryPauseStep",
+      "abort": false,
+      "step": 1,
+      "current_hash": "55df85dcff",
+      "stable_hash": "5549f45775"
+     },
+     "analysis": {
+      "demo-55df85dcff-54": {
+       "type": "Background",
+       "phase": "Running",
+       "message": null,
+       "metrics": {
+        "success-rate": {
+         "phase": "Running",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:52:22Z"
+        },
+        "latency-p95": {
+         "phase": "Running",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:52:22Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-5549f45775-brmgf": {
+       "hash": "5549f45775",
+       "ready": true,
+       "created": "2026-11-01T12:09:05Z",
+       "deleting": false
+      },
+      "demo-55df85dcff-jntdq": {
+       "hash": "55df85dcff",
+       "ready": true,
+       "created": "2026-11-01T12:51:41Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 90,
+        "demo-canary": 10,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   },
+   {
+    "t": 1793537572.201254,
+    "snap": {
+     "rollout": {
+      "phase": "Paused",
+      "message": "CanaryPauseStep",
+      "abort": false,
+      "step": 1,
+      "current_hash": "55df85dcff",
+      "stable_hash": "5549f45775"
+     },
+     "analysis": {
+      "demo-55df85dcff-54": {
+       "type": "Background",
+       "phase": "Running",
+       "message": null,
+       "metrics": {
+        "success-rate": {
+         "phase": "Running",
+         "count": 2,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:52:52Z"
+        },
+        "latency-p95": {
+         "phase": "Running",
+         "count": 2,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:52:52Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-5549f45775-brmgf": {
+       "hash": "5549f45775",
+       "ready": true,
+       "created": "2026-11-01T12:09:05Z",
+       "deleting": false
+      },
+      "demo-55df85dcff-jntdq": {
+       "hash": "55df85dcff",
+       "ready": true,
+       "created": "2026-11-01T12:51:41Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 50,
+        "demo-canary": 50,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   },
+   {
+    "t": 1793537574.8686862,
+    "snap": {
+     "rollout": {
+      "phase": "Paused",
+      "message": "CanaryPauseStep",
+      "abort": false,
+      "step": 3,
+      "current_hash": "55df85dcff",
+      "stable_hash": "5549f45775"
+     },
+     "analysis": {
+      "demo-55df85dcff-54": {
+       "type": "Background",
+       "phase": "Running",
+       "message": null,
+       "metrics": {
+        "success-rate": {
+         "phase": "Running",
+         "count": 2,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:52:52Z"
+        },
+        "latency-p95": {
+         "phase": "Running",
+         "count": 2,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:52:52Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-5549f45775-brmgf": {
+       "hash": "5549f45775",
+       "ready": true,
+       "created": "2026-11-01T12:09:05Z",
+       "deleting": false
+      },
+      "demo-55df85dcff-jntdq": {
+       "hash": "55df85dcff",
+       "ready": true,
+       "created": "2026-11-01T12:51:41Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 50,
+        "demo-canary": 50,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   },
+   {
+    "t": 1793537604.0830688,
+    "snap": {
+     "rollout": {
+      "phase": "Paused",
+      "message": "CanaryPauseStep",
+      "abort": false,
+      "step": 3,
+      "current_hash": "55df85dcff",
+      "stable_hash": "5549f45775"
+     },
+     "analysis": {
+      "demo-55df85dcff-54": {
+       "type": "Background",
+       "phase": "Running",
+       "message": null,
+       "metrics": {
+        "success-rate": {
+         "phase": "Running",
+         "count": 3,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:53:22Z"
+        },
+        "latency-p95": {
+         "phase": "Running",
+         "count": 3,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:53:22Z"
+        },
+        "memory-growth": {
+         "phase": "Running",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:53:22Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-5549f45775-brmgf": {
+       "hash": "5549f45775",
+       "ready": true,
+       "created": "2026-11-01T12:09:05Z",
+       "deleting": false
+      },
+      "demo-55df85dcff-jntdq": {
+       "hash": "55df85dcff",
+       "ready": true,
+       "created": "2026-11-01T12:51:41Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 50,
+        "demo-canary": 50,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   },
+   {
+    "t": 1793537633.4701812,
+    "snap": {
+     "rollout": {
+      "phase": "Healthy",
+      "message": null,
+      "abort": false,
+      "step": 4,
+      "current_hash": "55df85dcff",
+      "stable_hash": "55df85dcff"
+     },
+     "analysis": {
+      "demo-55df85dcff-54": {
+       "type": "Background",
+       "phase": "Successful",
+       "message": "Run Terminated",
+       "metrics": {
+        "success-rate": {
+         "phase": "Successful",
+         "count": 4,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:53:52Z"
+        },
+        "latency-p95": {
+         "phase": "Successful",
+         "count": 4,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:53:52Z"
+        },
+        "memory-growth": {
+         "phase": "Successful",
+         "count": 2,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:53:52Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-5549f45775-brmgf": {
+       "hash": "5549f45775",
+       "ready": true,
+       "created": "2026-11-01T12:09:05Z",
+       "deleting": false
+      },
+      "demo-55df85dcff-jntdq": {
+       "hash": "55df85dcff",
+       "ready": true,
+       "created": "2026-11-01T12:51:41Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 100,
+        "demo-canary": 0,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   }
+  ],
+  "bad_hash": "55df85dcff",
+  "stable_hash": "5549f45775",
+  "t_start": 1793537505.413933,
+  "t_end": 1793537633.470426,
+  "outcome": "promoted"
+ }
+}

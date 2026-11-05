@@ -1,0 +1,232 @@
+{
+ "run_id": "bg-f8-r1",
+ "info": {
+  "started_at": "2026-11-01T17:33:14",
+  "app": "demo-bg",
+  "strategy": "bg",
+  "fault": "f8",
+  "image_tag": "f8-wrong-e6d8d31-16",
+  "rep": 1,
+  "notes": "",
+  "git_commit": "c92e130"
+ },
+ "measurements": {
+  "outcome": "aborted",
+  "bad_hash": "744b7785c9",
+  "stable_hash": "5578986d6c",
+  "caught_by": "PrePromotion/smoke-test",
+  "ttd_s": 15.1,
+  "detect_from_start_s": 26.0,
+  "ttr_s": 1.3,
+  "max_exposure_pct": 0.0,
+  "user_exposed_s": 0,
+  "release_duration_s": null,
+  "trial_pod_minutes": 0.64,
+  "mirror_s": null,
+  "user": {
+   "total": 0,
+   "5xx": 0,
+   "slow": 0
+  },
+  "smoke": {
+   "total": 50,
+   "5xx": 0,
+   "slow": 0
+  }
+ },
+ "timeline": {
+  "app": "demo-bg",
+  "kind": "bluegreen",
+  "namespace": "demo-bg",
+  "label": "bg-f8-r1",
+  "clock_skew_s": 0.147,
+  "events": [
+   {
+    "t": 1793550794.92384,
+    "snap": {
+     "rollout": {
+      "phase": "Healthy",
+      "message": null,
+      "abort": false,
+      "step": null,
+      "current_hash": "5578986d6c",
+      "stable_hash": "5578986d6c"
+     },
+     "analysis": {
+      "demo-bg-5578986d6c-5-post": {
+       "type": "PostPromotion",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "success-rate": {
+         "phase": "Successful",
+         "count": 6,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:14:11Z"
+        },
+        "latency-p95": {
+         "phase": "Successful",
+         "count": 6,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:14:11Z"
+        },
+        "memory-growth": {
+         "phase": "Successful",
+         "count": 4,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:14:01Z"
+        }
+       }
+      },
+      "demo-bg-5578986d6c-5-pre": {
+       "type": "PrePromotion",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "smoke-test": {
+         "phase": "Successful",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:12:01Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5578986d6c"
+    }
+   },
+   {
+    "t": 1793550802.884705,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "active service cutover pending",
+      "abort": false,
+      "step": null,
+      "current_hash": "744b7785c9",
+      "stable_hash": "5578986d6c"
+     },
+     "analysis": {},
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      },
+      "demo-bg-744b7785c9-87vm7": {
+       "hash": "744b7785c9",
+       "ready": false,
+       "created": "2026-11-01T16:33:20Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5578986d6c"
+    }
+   },
+   {
+    "t": 1793550813.735348,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "active service cutover pending",
+      "abort": false,
+      "step": null,
+      "current_hash": "744b7785c9",
+      "stable_hash": "5578986d6c"
+     },
+     "analysis": {
+      "demo-bg-744b7785c9-20-pre": {
+       "type": "PrePromotion",
+       "phase": "Running",
+       "message": null,
+       "metrics": {
+        "smoke-test": {
+         "phase": "Running",
+         "count": 1,
+         "failed": 0,
+         "last_finished": null
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      },
+      "demo-bg-744b7785c9-87vm7": {
+       "hash": "744b7785c9",
+       "ready": true,
+       "created": "2026-11-01T16:33:20Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5578986d6c"
+    }
+   },
+   {
+    "t": 1793550830.103449,
+    "snap": {
+     "rollout": {
+      "phase": "Degraded",
+      "message": "RolloutAborted: Rollout aborted update to revision 20: Blue/green pre-promotion analysis phase error/failed: Metric \"smoke-test\" assessed Failed due to failed (1) > failureLimit (0)",
+      "abort": true,
+      "step": null,
+      "current_hash": "744b7785c9",
+      "stable_hash": "5578986d6c"
+     },
+     "analysis": {
+      "demo-bg-744b7785c9-20-pre": {
+       "type": "PrePromotion",
+       "phase": "Failed",
+       "message": "Metric \"smoke-test\" assessed Failed due to failed (1) > failureLimit (0)",
+       "metrics": {
+        "smoke-test": {
+         "phase": "Failed",
+         "count": 1,
+         "failed": 1,
+         "last_finished": "2026-11-01T16:33:49Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      },
+      "demo-bg-744b7785c9-87vm7": {
+       "hash": "744b7785c9",
+       "ready": true,
+       "created": "2026-11-01T16:33:20Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5578986d6c"
+    }
+   }
+  ],
+  "bad_hash": "744b7785c9",
+  "stable_hash": "5578986d6c",
+  "t_start": 1793550802.8845289,
+  "t_end": 1793550841.1983,
+  "outcome": "aborted"
+ }
+}

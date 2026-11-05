@@ -1,0 +1,47 @@
+# Runs as a step while the canary only receives mirrored copies of requests,
+# so a bad release is caught before any user is routed to it.
+# The gateway does not report shadow requests, so these queries read the
+# canary pod's own sidecar (reporter="destination"). Prometheus copies pod
+# labels onto the series, and rollouts_pod_template_hash picks the canary pod.
+# A fixed count makes the step end: count x interval is how long it mirrors.
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: mirror-health
+  namespace: demo
+spec:
+  args:
+    - name: canary-hash
+  metrics:
+    - name: mirror-success-rate
+      interval: 20s
+      initialDelay: 30s
+      count: 3
+      failureLimit: 0
+      successCondition: len(result) > 0 && result[0] >= 0.95
+      provider:
+        prometheus:
+          address: http://prometheus-server.monitoring.svc.cluster.local
+          query: |
+            (sum(rate(istio_requests_total{reporter="destination",
+              namespace="demo", rollouts_pod_template_hash="{{args.canary-hash}}",
+              response_code!~"5.*"}[1m])) or vector(0))
+            /
+            sum(rate(istio_requests_total{reporter="destination",
+              namespace="demo", rollouts_pod_template_hash="{{args.canary-hash}}"}[1m]))
+
+    # Same first look as success-rate: at 20s the new canary often has no
+    # latency sample yet, and the empty result counted as a failure (v7 pilot).
+    - name: mirror-latency-p95
+      interval: 20s
+      initialDelay: 30s
+      count: 3
+      failureLimit: 1
+      successCondition: len(result) > 0 && result[0] <= 300
+      provider:
+        prometheus:
+          address: http://prometheus-server.monitoring.svc.cluster.local
+          query: |
+            histogram_quantile(0.95, sum by (le) (rate(
+              istio_request_duration_milliseconds_bucket{reporter="destination",
+                namespace="demo", rollouts_pod_template_hash="{{args.canary-hash}}"}[1m])))

@@ -1,0 +1,59 @@
+# Runs right after the switch, while every user is on the new version.
+# Queries read the new pods' own sidecar (reporter="destination") and pick
+# them by rollouts_pod_template_hash (Prometheus copies pod labels onto the
+# series), so requests the old version served before the switch don't count.
+# A fixed count makes it end: about 2.5 minutes, inside scaleDownDelaySeconds.
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: bg-post-promotion
+  namespace: demo-bg
+spec:
+  args:
+    - name: new-hash
+  metrics:
+    - name: success-rate
+      interval: 20s
+      initialDelay: 30s
+      count: 6
+      failureLimit: 1
+      successCondition: len(result) > 0 && result[0] >= 0.95
+      provider:
+        prometheus:
+          address: http://prometheus-server.monitoring.svc.cluster.local
+          query: |
+            (sum(rate(istio_requests_total{reporter="destination",
+              namespace="demo-bg", rollouts_pod_template_hash="{{args.new-hash}}",
+              response_code!~"5.*"}[1m])) or vector(0))
+            /
+            sum(rate(istio_requests_total{reporter="destination",
+              namespace="demo-bg", rollouts_pod_template_hash="{{args.new-hash}}"}[1m]))
+
+    - name: latency-p95
+      interval: 20s
+      initialDelay: 30s
+      count: 6
+      failureLimit: 1
+      successCondition: len(result) > 0 && result[0] <= 300
+      provider:
+        prometheus:
+          address: http://prometheus-server.monitoring.svc.cluster.local
+          query: |
+            histogram_quantile(0.95, sum by (le) (rate(
+              istio_request_duration_milliseconds_bucket{reporter="destination",
+                namespace="demo-bg", rollouts_pod_template_hash="{{args.new-hash}}"}[1m])))
+
+    # The new pod already ran during the smoke test, so its startup jump is
+    # over by now; 60s in, the 1m window holds only steady-state samples.
+    - name: memory-growth
+      interval: 20s
+      initialDelay: 60s
+      count: 4
+      failureLimit: 0
+      successCondition: len(result) > 0 && result[0] <= 0.05
+      provider:
+        prometheus:
+          address: http://prometheus-server.monitoring.svc.cluster.local
+          query: |
+            max(deriv(container_memory_working_set_bytes{namespace="demo-bg",
+              container="app", pod=~"demo-bg-{{args.new-hash}}-.*"}[1m])) / 1048576

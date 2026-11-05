@@ -1,0 +1,32 @@
+# Standalone Prometheus: only what the rollout analysis needs.
+alertmanager:
+  enabled: false
+prometheus-pushgateway:
+  enabled: false
+prometheus-node-exporter:
+  enabled: false
+kube-state-metrics:
+  enabled: false
+server:
+  global:
+    # Fast enough for the rollout analysis (30s interval, 2m rate window) to see
+    # a bad canary within seconds. The chart default is 1m.
+    scrape_interval: 10s
+  resources:
+    requests: {cpu: 100m, memory: 384Mi}
+    limits: {memory: 1Gi}
+extraScrapeConfigs: |
+  - job_name: envoy-stats
+    metrics_path: /stats/prometheus
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_container_port_name]
+        action: keep
+        regex: '.*-envoy-prom'
+      - action: labelmap
+        regex: __meta_kubernetes_pod_label_(.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod

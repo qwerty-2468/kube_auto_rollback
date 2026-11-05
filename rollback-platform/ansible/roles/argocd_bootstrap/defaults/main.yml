@@ -1,0 +1,6 @@
+argocd_bootstrap_context: "{{ cluster_context }}"
+argocd_bootstrap_chart_version: 10.10.3
+argocd_bootstrap_namespaces: [argocd, cert-manager, istio-system, monitoring]
+argocd_bootstrap_repo_url: "{{ gitops_repo_url }}"
+argocd_bootstrap_revision: "{{ gitops_revision }}"
+argocd_bootstrap_path: "gitops/clusters/{{ env }}"

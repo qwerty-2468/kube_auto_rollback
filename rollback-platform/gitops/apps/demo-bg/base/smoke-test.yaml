@@ -1,0 +1,51 @@
+# Pre-promotion check with the Job provider: the metric passes if the Job
+# succeeds (exit 0) and fails if it fails. The Job runs inside the mesh, so
+# its requests pass STRICT mTLS; istio-proxy runs as a native sidecar and stops
+# when curl exits, which lets the Job complete.
+# It checks status codes and the answer (result 5050), not latency or memory:
+# those are left to post-promotion.
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: smoke-test
+  namespace: demo-bg
+spec:
+  metrics:
+    - name: smoke-test
+      provider:
+        job:
+          spec:
+            backoffLimit: 0 # one attempt; a retry would hide a flaky release
+            activeDeadlineSeconds: 120
+            template:
+              spec:
+                restartPolicy: Never
+                containers:
+                  - name: smoke
+                    image: curlimages/curl:8.22.0
+                    command: [/bin/sh, -c]
+                    args:
+                      - |
+                        # Status code and answer are counted separately, so the log
+                        # shows which kind of fault the release has.
+                        fails=0; wrong=0
+                        for i in $(seq 1 50); do
+                          out=$(curl -s --max-time 5 -w '\n%{http_code}' \
+                            http://demo-bg-preview/api/work)
+                          code=$(printf '%s\n' "$out" | tail -n 1)
+                          body=$(printf '%s\n' "$out" | head -n 1)
+                          case "$code" in
+                            2*) ;;
+                            *) fails=$((fails + 1)); echo "request $i: HTTP $code"; continue ;;
+                          esac
+                          # sum(1..100) is 5050; anything else is a wrong answer.
+                          case "$body" in
+                            *'"result": 5050'*) ;;
+                            *) wrong=$((wrong + 1)); echo "request $i: wrong answer: $body" ;;
+                          esac
+                        done
+                        echo "$fails of 50 requests failed, $wrong answered wrong"
+                        [ "$fails" -eq 0 ] && [ "$wrong" -eq 0 ]
+                    resources:
+                      requests: {cpu: 10m, memory: 16Mi}
+                      limits: {memory: 32Mi}

@@ -1,0 +1,63 @@
+# One background AnalysisRun measures all three; any metric failing twice
+# (failureLimit: 1) aborts the rollout.
+# Traffic metrics use reporter="source": the caller (the gateway) labels each
+# request with the Service it routed to. The destination sidecar can't tell
+# demo-stable from demo-canary when both select the same pods.
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: canary-health
+  namespace: demo
+spec:
+  args:
+    - name: canary-hash
+  metrics:
+    # Errors: share of canary requests that were not 5xx.
+    - name: success-rate
+      interval: 30s
+      initialDelay: 30s
+      failureLimit: 1
+      successCondition: result[0] >= 0.95
+      provider:
+        prometheus:
+          address: http://prometheus-server.monitoring.svc.cluster.local
+          # `or vector(0)` keeps the numerator defined when every request fails.
+          query: |
+            (sum(rate(istio_requests_total{reporter="source",
+              destination_service_name="demo-canary",
+              response_code!~"5.*"}[1m])) or vector(0))
+            /
+            sum(rate(istio_requests_total{reporter="source",
+              destination_service_name="demo-canary"}[1m]))
+
+    # Latency: 95th percentile of canary request duration, in ms.
+    - name: latency-p95
+      interval: 30s
+      initialDelay: 30s
+      failureLimit: 1
+      successCondition: result[0] <= 300
+      provider:
+        prometheus:
+          address: http://prometheus-server.monitoring.svc.cluster.local
+          query: |
+            histogram_quantile(0.95, sum by (le) (rate(
+              istio_request_duration_milliseconds_bucket{reporter="source",
+                destination_service_name="demo-canary"}[1m])))
+
+    # Memory leak: how fast the canary's app container grows, in MiB/s
+    # (0.05 MiB/s = 3 MiB a minute). A healthy pod jumps ~8 MiB in its first
+    # 15s and then stays flat; deriv() fits a line through the whole window, so
+    # the window must start after that jump: 1m window, first look at 90s.
+    # Healthy reads ~0, a leak reads far above the limit, so one failure is
+    # enough (dev's canary only lasts ~2 minutes).
+    - name: memory-growth
+      interval: 30s
+      initialDelay: 90s
+      failureLimit: 0
+      successCondition: result[0] <= 0.05
+      provider:
+        prometheus:
+          address: http://prometheus-server.monitoring.svc.cluster.local
+          query: |
+            max(deriv(container_memory_working_set_bytes{namespace="demo",
+              container="app", pod=~"demo-{{args.canary-hash}}-.*"}[1m])) / 1048576

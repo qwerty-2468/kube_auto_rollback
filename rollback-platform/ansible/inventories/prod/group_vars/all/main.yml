@@ -1,0 +1,27 @@
+env: prod
+base_domain: prod.internal
+
+ansible_user: ubuntu
+ansible_port: 22
+ansible_ssh_private_key_file: ~/Projects/kube_auto_rollback/.ssh/id_rsa
+
+# k3s.orchestration
+k3s_version: v1.36.5+k3s1
+token: "{{ k3s_token }}" # from secrets.sops.yml
+api_endpoint: "{{ hostvars[groups['server'][0]]['ansible_host'] }}"
+cluster_context: k3s-prod
+k3s_server_config_mode: "0640"
+# Istio is the only ingress. ServiceLB stays on: it exposes the Istio gateway on 80/443.
+extra_server_args: "--disable traefik"
+
+# argocd_bootstrap
+gitops_repo_url: http://100.83.93.156:3000/admin/rollback-platform.git
+gitops_revision: release
+
+# Gitea's container registry speaks plain HTTP; without this containerd refuses it.
+# Images are public there, so no credentials are needed.
+registries_config_yaml: |
+  mirrors:
+    "prgdlv-auto.netbird.cloud:3000":
+      endpoint:
+        - "http://prgdlv-auto.netbird.cloud:3000"

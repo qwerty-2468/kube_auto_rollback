@@ -1,0 +1,989 @@
+{
+ "run_id": "bg-f0-r1",
+ "info": {
+  "started_at": "2026-11-01T17:11:22",
+  "app": "demo-bg",
+  "strategy": "bg",
+  "fault": "f0",
+  "image_tag": "f0-healthy-abb287d-9",
+  "rep": 1,
+  "notes": "",
+  "git_commit": "48d34cc"
+ },
+ "measurements": {
+  "outcome": "promoted",
+  "bad_hash": "5fd7965bf8",
+  "stable_hash": "5578986d6c",
+  "caught_by": null,
+  "ttd_s": null,
+  "detect_from_start_s": null,
+  "ttr_s": null,
+  "max_exposure_pct": 100.0,
+  "user_exposed_s": 131.8,
+  "release_duration_s": 159.4,
+  "trial_pod_minutes": 2.7,
+  "mirror_s": null,
+  "user": {
+   "total": 586,
+   "5xx": 0,
+   "slow": 0,
+   "window": [
+    1793549504,
+    1793549680
+   ]
+  },
+  "smoke": {
+   "total": 50,
+   "5xx": 0,
+   "slow": 0
+  }
+ },
+ "timeline": {
+  "app": "demo-bg",
+  "kind": "bluegreen",
+  "namespace": "demo-bg",
+  "label": "bg-f0-r1",
+  "clock_skew_s": 0.117,
+  "events": [
+   {
+    "t": 1793549483.203328,
+    "snap": {
+     "rollout": {
+      "phase": "Healthy",
+      "message": null,
+      "abort": false,
+      "step": null,
+      "current_hash": "5578986d6c",
+      "stable_hash": "5578986d6c"
+     },
+     "analysis": {
+      "demo-bg-5578986d6c-5-post": {
+       "type": "PostPromotion",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "success-rate": {
+         "phase": "Successful",
+         "count": 6,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:14:11Z"
+        },
+        "latency-p95": {
+         "phase": "Successful",
+         "count": 6,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:14:11Z"
+        },
+        "memory-growth": {
+         "phase": "Successful",
+         "count": 4,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:14:01Z"
+        }
+       }
+      },
+      "demo-bg-5578986d6c-5-pre": {
+       "type": "PrePromotion",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "smoke-test": {
+         "phase": "Successful",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:12:01Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5578986d6c"
+    }
+   },
+   {
+    "t": 1793549488.380974,
+    "snap": {
+     "rollout": {
+      "phase": "Healthy",
+      "message": null,
+      "abort": false,
+      "step": null,
+      "current_hash": "5578986d6c",
+      "stable_hash": "5578986d6c"
+     },
+     "analysis": {
+      "demo-bg-5578986d6c-5-post": {
+       "type": "PostPromotion",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "success-rate": {
+         "phase": "Successful",
+         "count": 6,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:14:11Z"
+        },
+        "latency-p95": {
+         "phase": "Successful",
+         "count": 6,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:14:11Z"
+        },
+        "memory-growth": {
+         "phase": "Successful",
+         "count": 4,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:14:01Z"
+        }
+       }
+      },
+      "demo-bg-5578986d6c-5-pre": {
+       "type": "PrePromotion",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "smoke-test": {
+         "phase": "Successful",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:12:01Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      },
+      "demo-bg-5fd7965bf8-t6km4": {
+       "hash": "5fd7965bf8",
+       "ready": false,
+       "created": "2026-11-01T16:11:28Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5578986d6c"
+    }
+   },
+   {
+    "t": 1793549491.024957,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "active service cutover pending",
+      "abort": false,
+      "step": null,
+      "current_hash": "5fd7965bf8",
+      "stable_hash": "5578986d6c"
+     },
+     "analysis": {},
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      },
+      "demo-bg-5fd7965bf8-t6km4": {
+       "hash": "5fd7965bf8",
+       "ready": false,
+       "created": "2026-11-01T16:11:28Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5578986d6c"
+    }
+   },
+   {
+    "t": 1793549501.827144,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "active service cutover pending",
+      "abort": false,
+      "step": null,
+      "current_hash": "5fd7965bf8",
+      "stable_hash": "5578986d6c"
+     },
+     "analysis": {
+      "demo-bg-5fd7965bf8-6-pre": {
+       "type": "PrePromotion",
+       "phase": "Running",
+       "message": null,
+       "metrics": {
+        "smoke-test": {
+         "phase": "Running",
+         "count": 1,
+         "failed": 0,
+         "last_finished": null
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      },
+      "demo-bg-5fd7965bf8-t6km4": {
+       "hash": "5fd7965bf8",
+       "ready": true,
+       "created": "2026-11-01T16:11:28Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5578986d6c"
+    }
+   },
+   {
+    "t": 1793549518.6401548,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "waiting for analysis to complete",
+      "abort": false,
+      "step": null,
+      "current_hash": "5fd7965bf8",
+      "stable_hash": "5578986d6c"
+     },
+     "analysis": {
+      "demo-bg-5fd7965bf8-6-post": {
+       "type": "PostPromotion",
+       "phase": "Running",
+       "message": null,
+       "metrics": {}
+      },
+      "demo-bg-5fd7965bf8-6-pre": {
+       "type": "PrePromotion",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "smoke-test": {
+         "phase": "Successful",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:11:58Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      },
+      "demo-bg-5fd7965bf8-t6km4": {
+       "hash": "5fd7965bf8",
+       "ready": true,
+       "created": "2026-11-01T16:11:28Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5fd7965bf8"
+    }
+   },
+   {
+    "t": 1793549549.1026702,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "waiting for analysis to complete",
+      "abort": false,
+      "step": null,
+      "current_hash": "5fd7965bf8",
+      "stable_hash": "5578986d6c"
+     },
+     "analysis": {
+      "demo-bg-5fd7965bf8-6-post": {
+       "type": "PostPromotion",
+       "phase": "Running",
+       "message": null,
+       "metrics": {
+        "latency-p95": {
+         "phase": "Running",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:12:28Z"
+        },
+        "success-rate": {
+         "phase": "Running",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:12:28Z"
+        }
+       }
+      },
+      "demo-bg-5fd7965bf8-6-pre": {
+       "type": "PrePromotion",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "smoke-test": {
+         "phase": "Successful",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:11:58Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      },
+      "demo-bg-5fd7965bf8-t6km4": {
+       "hash": "5fd7965bf8",
+       "ready": true,
+       "created": "2026-11-01T16:11:28Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5fd7965bf8"
+    }
+   },
+   {
+    "t": 1793549571.08024,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "waiting for analysis to complete",
+      "abort": false,
+      "step": null,
+      "current_hash": "5fd7965bf8",
+      "stable_hash": "5578986d6c"
+     },
+     "analysis": {
+      "demo-bg-5fd7965bf8-6-post": {
+       "type": "PostPromotion",
+       "phase": "Running",
+       "message": null,
+       "metrics": {
+        "latency-p95": {
+         "phase": "Running",
+         "count": 2,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:12:48Z"
+        },
+        "success-rate": {
+         "phase": "Running",
+         "count": 2,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:12:48Z"
+        }
+       }
+      },
+      "demo-bg-5fd7965bf8-6-pre": {
+       "type": "PrePromotion",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "smoke-test": {
+         "phase": "Successful",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:11:58Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      },
+      "demo-bg-5fd7965bf8-t6km4": {
+       "hash": "5fd7965bf8",
+       "ready": true,
+       "created": "2026-11-01T16:11:28Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5fd7965bf8"
+    }
+   },
+   {
+    "t": 1793549579.306745,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "waiting for analysis to complete",
+      "abort": false,
+      "step": null,
+      "current_hash": "5fd7965bf8",
+      "stable_hash": "5578986d6c"
+     },
+     "analysis": {
+      "demo-bg-5fd7965bf8-6-post": {
+       "type": "PostPromotion",
+       "phase": "Running",
+       "message": null,
+       "metrics": {
+        "latency-p95": {
+         "phase": "Running",
+         "count": 2,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:12:48Z"
+        },
+        "success-rate": {
+         "phase": "Running",
+         "count": 2,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:12:48Z"
+        },
+        "memory-growth": {
+         "phase": "Running",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:12:58Z"
+        }
+       }
+      },
+      "demo-bg-5fd7965bf8-6-pre": {
+       "type": "PrePromotion",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "smoke-test": {
+         "phase": "Successful",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:11:58Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      },
+      "demo-bg-5fd7965bf8-t6km4": {
+       "hash": "5fd7965bf8",
+       "ready": true,
+       "created": "2026-11-01T16:11:28Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5fd7965bf8"
+    }
+   },
+   {
+    "t": 1793549590.22525,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "waiting for analysis to complete",
+      "abort": false,
+      "step": null,
+      "current_hash": "5fd7965bf8",
+      "stable_hash": "5578986d6c"
+     },
+     "analysis": {
+      "demo-bg-5fd7965bf8-6-post": {
+       "type": "PostPromotion",
+       "phase": "Running",
+       "message": null,
+       "metrics": {
+        "latency-p95": {
+         "phase": "Running",
+         "count": 3,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:13:08Z"
+        },
+        "success-rate": {
+         "phase": "Running",
+         "count": 3,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:13:08Z"
+        },
+        "memory-growth": {
+         "phase": "Running",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:12:58Z"
+        }
+       }
+      },
+      "demo-bg-5fd7965bf8-6-pre": {
+       "type": "PrePromotion",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "smoke-test": {
+         "phase": "Successful",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:11:58Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      },
+      "demo-bg-5fd7965bf8-t6km4": {
+       "hash": "5fd7965bf8",
+       "ready": true,
+       "created": "2026-11-01T16:11:28Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5fd7965bf8"
+    }
+   },
+   {
+    "t": 1793549598.521874,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "waiting for analysis to complete",
+      "abort": false,
+      "step": null,
+      "current_hash": "5fd7965bf8",
+      "stable_hash": "5578986d6c"
+     },
+     "analysis": {
+      "demo-bg-5fd7965bf8-6-post": {
+       "type": "PostPromotion",
+       "phase": "Running",
+       "message": null,
+       "metrics": {
+        "latency-p95": {
+         "phase": "Running",
+         "count": 3,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:13:08Z"
+        },
+        "success-rate": {
+         "phase": "Running",
+         "count": 3,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:13:08Z"
+        },
+        "memory-growth": {
+         "phase": "Running",
+         "count": 2,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:13:18Z"
+        }
+       }
+      },
+      "demo-bg-5fd7965bf8-6-pre": {
+       "type": "PrePromotion",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "smoke-test": {
+         "phase": "Successful",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:11:58Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      },
+      "demo-bg-5fd7965bf8-t6km4": {
+       "hash": "5fd7965bf8",
+       "ready": true,
+       "created": "2026-11-01T16:11:28Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5fd7965bf8"
+    }
+   },
+   {
+    "t": 1793549609.383921,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "waiting for analysis to complete",
+      "abort": false,
+      "step": null,
+      "current_hash": "5fd7965bf8",
+      "stable_hash": "5578986d6c"
+     },
+     "analysis": {
+      "demo-bg-5fd7965bf8-6-post": {
+       "type": "PostPromotion",
+       "phase": "Running",
+       "message": null,
+       "metrics": {
+        "latency-p95": {
+         "phase": "Running",
+         "count": 4,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:13:28Z"
+        },
+        "success-rate": {
+         "phase": "Running",
+         "count": 4,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:13:28Z"
+        },
+        "memory-growth": {
+         "phase": "Running",
+         "count": 2,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:13:18Z"
+        }
+       }
+      },
+      "demo-bg-5fd7965bf8-6-pre": {
+       "type": "PrePromotion",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "smoke-test": {
+         "phase": "Successful",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:11:58Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      },
+      "demo-bg-5fd7965bf8-t6km4": {
+       "hash": "5fd7965bf8",
+       "ready": true,
+       "created": "2026-11-01T16:11:28Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5fd7965bf8"
+    }
+   },
+   {
+    "t": 1793549620.4995708,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "waiting for analysis to complete",
+      "abort": false,
+      "step": null,
+      "current_hash": "5fd7965bf8",
+      "stable_hash": "5578986d6c"
+     },
+     "analysis": {
+      "demo-bg-5fd7965bf8-6-post": {
+       "type": "PostPromotion",
+       "phase": "Running",
+       "message": null,
+       "metrics": {
+        "latency-p95": {
+         "phase": "Running",
+         "count": 4,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:13:28Z"
+        },
+        "success-rate": {
+         "phase": "Running",
+         "count": 4,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:13:28Z"
+        },
+        "memory-growth": {
+         "phase": "Running",
+         "count": 3,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:13:38Z"
+        }
+       }
+      },
+      "demo-bg-5fd7965bf8-6-pre": {
+       "type": "PrePromotion",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "smoke-test": {
+         "phase": "Successful",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:11:58Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      },
+      "demo-bg-5fd7965bf8-t6km4": {
+       "hash": "5fd7965bf8",
+       "ready": true,
+       "created": "2026-11-01T16:11:28Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5fd7965bf8"
+    }
+   },
+   {
+    "t": 1793549628.6978948,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "waiting for analysis to complete",
+      "abort": false,
+      "step": null,
+      "current_hash": "5fd7965bf8",
+      "stable_hash": "5578986d6c"
+     },
+     "analysis": {
+      "demo-bg-5fd7965bf8-6-post": {
+       "type": "PostPromotion",
+       "phase": "Running",
+       "message": null,
+       "metrics": {
+        "latency-p95": {
+         "phase": "Running",
+         "count": 5,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:13:48Z"
+        },
+        "success-rate": {
+         "phase": "Running",
+         "count": 5,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:13:48Z"
+        },
+        "memory-growth": {
+         "phase": "Running",
+         "count": 3,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:13:38Z"
+        }
+       }
+      },
+      "demo-bg-5fd7965bf8-6-pre": {
+       "type": "PrePromotion",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "smoke-test": {
+         "phase": "Successful",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:11:58Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      },
+      "demo-bg-5fd7965bf8-t6km4": {
+       "hash": "5fd7965bf8",
+       "ready": true,
+       "created": "2026-11-01T16:11:28Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5fd7965bf8"
+    }
+   },
+   {
+    "t": 1793549639.592403,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "waiting for analysis to complete",
+      "abort": false,
+      "step": null,
+      "current_hash": "5fd7965bf8",
+      "stable_hash": "5578986d6c"
+     },
+     "analysis": {
+      "demo-bg-5fd7965bf8-6-post": {
+       "type": "PostPromotion",
+       "phase": "Running",
+       "message": null,
+       "metrics": {
+        "latency-p95": {
+         "phase": "Running",
+         "count": 5,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:13:48Z"
+        },
+        "success-rate": {
+         "phase": "Running",
+         "count": 5,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:13:48Z"
+        },
+        "memory-growth": {
+         "phase": "Successful",
+         "count": 4,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:13:58Z"
+        }
+       }
+      },
+      "demo-bg-5fd7965bf8-6-pre": {
+       "type": "PrePromotion",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "smoke-test": {
+         "phase": "Successful",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:11:58Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      },
+      "demo-bg-5fd7965bf8-t6km4": {
+       "hash": "5fd7965bf8",
+       "ready": true,
+       "created": "2026-11-01T16:11:28Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5fd7965bf8"
+    }
+   },
+   {
+    "t": 1793549650.4587898,
+    "snap": {
+     "rollout": {
+      "phase": "Healthy",
+      "message": null,
+      "abort": false,
+      "step": null,
+      "current_hash": "5fd7965bf8",
+      "stable_hash": "5fd7965bf8"
+     },
+     "analysis": {
+      "demo-bg-5fd7965bf8-6-post": {
+       "type": "PostPromotion",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "latency-p95": {
+         "phase": "Successful",
+         "count": 6,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:14:08Z"
+        },
+        "success-rate": {
+         "phase": "Successful",
+         "count": 6,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:14:08Z"
+        },
+        "memory-growth": {
+         "phase": "Successful",
+         "count": 4,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:13:58Z"
+        }
+       }
+      },
+      "demo-bg-5fd7965bf8-6-pre": {
+       "type": "PrePromotion",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "smoke-test": {
+         "phase": "Successful",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T16:11:58Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-bg-5578986d6c-chchk": {
+       "hash": "5578986d6c",
+       "ready": true,
+       "created": "2026-11-01T12:11:29Z",
+       "deleting": false
+      },
+      "demo-bg-5fd7965bf8-t6km4": {
+       "hash": "5fd7965bf8",
+       "ready": true,
+       "created": "2026-11-01T16:11:28Z",
+       "deleting": false
+      }
+     },
+     "active_hash": "5fd7965bf8"
+    }
+   }
+  ],
+  "bad_hash": "5fd7965bf8",
+  "stable_hash": "5578986d6c",
+  "t_start": 1793549491.024887,
+  "t_end": 1793549650.458913,
+  "outcome": "promoted"
+ }
+}

@@ -1,0 +1,521 @@
+# Dashboards, data source and login are all defined here, so Grafana needs no
+# persistent volume: a new pod comes back identical.
+admin:
+  existingSecret: grafana-admin # created by Ansible from SOPS
+testFramework:
+  enabled: false
+# First start (database migrations) peaks around 250Mi; 256Mi was too tight.
+resources:
+  requests: { cpu: 20m, memory: 384Mi }
+  limits: { memory: 1Gi }
+grafana.ini:
+  auth.anonymous:
+    enabled: true
+    org_role: Viewer
+  users:
+    allow_sign_up: false
+  plugins:
+    # Grafana 13 downloads a set of app plugins on first start; none are used here.
+    preinstall_disabled: true
+  analytics:
+    reporting_enabled: false
+    check_for_updates: false
+    check_for_plugin_updates: false
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        uid: prometheus # the Istio dashboards below are rewritten to point at this uid
+        type: prometheus
+        access: proxy
+        url: http://prometheus-server.monitoring.svc.cluster.local
+        isDefault: true
+        jsonData:
+          timeInterval: 10s # matches the scrape interval
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - {
+          name: rollback,
+          folder: "",
+          type: file,
+          disableDeletion: true,
+          options: { path: /var/lib/grafana/dashboards/rollback },
+        }
+      - {
+          name: istio,
+          folder: Istio,
+          type: file,
+          disableDeletion: true,
+          options: { path: /var/lib/grafana/dashboards/istio },
+        }
+dashboards:
+  istio:
+    istio-mesh:
+      gnetId: 7639
+      revision: 341
+      datasource:
+        - { name: DS_PROMETHEUS, value: prometheus }
+    istio-service:
+      gnetId: 7636
+      revision: 340
+      datasource:
+        - { name: DS_PROMETHEUS, value: prometheus }
+    istio-workload:
+      gnetId: 7630
+      revision: 341
+      datasource:
+        - { name: DS_PROMETHEUS, value: prometheus }
+    istio-control-plane:
+      gnetId: 7645
+      revision: 340
+      datasource:
+        - { name: DS_PROMETHEUS, value: prometheus }
+  rollback:
+    rollback:
+      json: |
+        {
+          "uid": "rollback",
+          "title": "Rollback",
+          "tags": [
+            "argo-rollouts",
+            "istio"
+          ],
+          "timezone": "browser",
+          "refresh": "10s",
+          "time": {
+            "from": "now-30m",
+            "to": "now"
+          },
+          "schemaVersion": 41,
+          "editable": true,
+          "panels": [
+            {
+              "id": 1,
+              "type": "state-timeline",
+              "title": "Rollout phase",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "description": "Phase reported by the Argo Rollouts controller. Degraded = the analysis failed and the rollout was aborted.",
+              "gridPos": {
+                "x": 0,
+                "y": 0,
+                "w": 16,
+                "h": 5
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "max by (phase) (rollout_info{namespace=\"demo\", name=\"demo\"})",
+                  "legendFormat": "{{phase}}",
+                  "refId": "A"
+                }
+              ],
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "blue"
+                  }
+                },
+                "overrides": []
+              },
+              "options": {
+                "showValue": "never",
+                "mergeValues": true,
+                "legend": {
+                  "showLegend": false
+                }
+              }
+            },
+            {
+              "id": 2,
+              "type": "table",
+              "title": "Analysis runs",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "description": "Every AnalysisRun the controller knows about and its result.",
+              "gridPos": {
+                "x": 16,
+                "y": 0,
+                "w": 8,
+                "h": 5
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "analysis_run_info{namespace=\"demo\"}",
+                  "legendFormat": "",
+                  "refId": "A",
+                  "format": "table",
+                  "instant": true
+                }
+              ],
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "includeByName": {
+                      "name": true,
+                      "phase": true
+                    }
+                  }
+                }
+              ],
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              },
+              "options": {
+                "showHeader": true
+              }
+            },
+            {
+              "id": 3,
+              "type": "timeseries",
+              "title": "Success rate (non-5xx share)",
+              "description": "As seen by the ingress gateway. The red line is the analysis threshold (0.95): the canary dropping below it aborts the rollout.",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "gridPos": {
+                "x": 0,
+                "y": 5,
+                "w": 12,
+                "h": 9
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (destination_service_name) (rate(istio_requests_total{reporter=\"source\", destination_service_name=~\"demo-(stable|canary)\", response_code!~\"5.*\"}[1m])) / sum by (destination_service_name) (rate(istio_requests_total{reporter=\"source\", destination_service_name=~\"demo-(stable|canary)\"}[1m]))",
+                  "legendFormat": "{{destination_service_name}}",
+                  "refId": "A"
+                }
+              ],
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percentunit",
+                  "custom": {
+                    "lineWidth": 2,
+                    "fillOpacity": 0,
+                    "thresholdsStyle": {
+                      "mode": "line"
+                    }
+                  },
+                  "min": 0,
+                  "max": 1,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "red",
+                        "value": null
+                      },
+                      {
+                        "color": "transparent",
+                        "value": 0.95
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "demo-stable"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "fixed",
+                          "fixedColor": "green"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "demo-canary"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "fixed",
+                          "fixedColor": "orange"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom"
+                },
+                "tooltip": {
+                  "mode": "multi"
+                }
+              }
+            },
+            {
+              "id": 4,
+              "type": "timeseries",
+              "title": "Traffic split (requests/s)",
+              "description": "Stacked. Shows the weights Argo Rollouts sets on the VirtualService: 10% -> 50% -> 100%, or back to 0% on abort.",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "gridPos": {
+                "x": 12,
+                "y": 5,
+                "w": 12,
+                "h": 9
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (destination_service_name) (rate(istio_requests_total{reporter=\"source\", destination_service_name=~\"demo-(stable|canary)\"}[1m]))",
+                  "legendFormat": "{{destination_service_name}}",
+                  "refId": "A"
+                }
+              ],
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "reqps",
+                  "custom": {
+                    "lineWidth": 2,
+                    "fillOpacity": 10,
+                    "stacking": {
+                      "mode": "normal"
+                    }
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "demo-stable"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "fixed",
+                          "fixedColor": "green"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "demo-canary"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "fixed",
+                          "fixedColor": "orange"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom"
+                },
+                "tooltip": {
+                  "mode": "multi"
+                }
+              }
+            },
+            {
+              "id": 5,
+              "type": "timeseries",
+              "title": "5xx errors (requests/s)",
+              "description": "Server errors per Service.",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "gridPos": {
+                "x": 0,
+                "y": 14,
+                "w": 12,
+                "h": 8
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "sum by (destination_service_name) (rate(istio_requests_total{reporter=\"source\", destination_service_name=~\"demo-(stable|canary)\", response_code=~\"5.*\"}[1m]))",
+                  "legendFormat": "{{destination_service_name}}",
+                  "refId": "A"
+                }
+              ],
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "reqps",
+                  "custom": {
+                    "lineWidth": 2,
+                    "fillOpacity": 10,
+                    "stacking": {
+                      "mode": "none"
+                    }
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "demo-stable"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "fixed",
+                          "fixedColor": "green"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "demo-canary"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "fixed",
+                          "fixedColor": "orange"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom"
+                },
+                "tooltip": {
+                  "mode": "multi"
+                }
+              }
+            },
+            {
+              "id": 6,
+              "type": "timeseries",
+              "title": "Latency p95",
+              "description": "95th percentile request duration per Service.",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "gridPos": {
+                "x": 12,
+                "y": 14,
+                "w": 12,
+                "h": 8
+              },
+              "targets": [
+                {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                  },
+                  "expr": "histogram_quantile(0.95, sum by (le, destination_service_name) (rate(istio_request_duration_milliseconds_bucket{reporter=\"source\", destination_service_name=~\"demo-(stable|canary)\"}[1m])))",
+                  "legendFormat": "{{destination_service_name}}",
+                  "refId": "A"
+                }
+              ],
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "ms",
+                  "custom": {
+                    "lineWidth": 2,
+                    "fillOpacity": 10,
+                    "stacking": {
+                      "mode": "none"
+                    }
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "demo-stable"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "fixed",
+                          "fixedColor": "green"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "demo-canary"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "mode": "fixed",
+                          "fixedColor": "orange"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom"
+                },
+                "tooltip": {
+                  "mode": "multi"
+                }
+              }
+            }
+          ]
+        }

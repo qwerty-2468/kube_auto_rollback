@@ -1,0 +1,37 @@
+# Steady traffic through the ingress gateway to the active version, so the
+# post-promotion analysis has user requests to measure.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loadgen
+  namespace: demo-bg
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loadgen
+  template:
+    metadata:
+      labels:
+        app: loadgen
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      containers:
+        - name: curl
+          image: curlimages/curl:8.22.0
+          env:
+            - name: TARGET_HOST
+              value: "" # set per environment
+          command: [/bin/sh, -c]
+          args:
+            - |
+              while true; do
+                curl -sk -o /dev/null --max-time 5 \
+                  --connect-to "$TARGET_HOST:443:istio-ingressgateway.istio-system.svc.cluster.local:443" \
+                  "https://$TARGET_HOST/api/work"
+                sleep 0.2
+              done
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {memory: 32Mi}

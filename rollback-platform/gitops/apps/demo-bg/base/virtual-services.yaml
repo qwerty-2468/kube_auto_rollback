@@ -1,0 +1,32 @@
+# Blue-green needs no traffic splitting: promotion switches the active Service's
+# selector, so these routes never change. The preview host lets you open the
+# waiting version in a browser before it is promoted.
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: demo-bg
+  namespace: demo-bg
+spec:
+  hosts: [] # set per environment
+  gateways:
+    - istio-system/main-gateway
+  http:
+    - route:
+        - destination:
+            host: demo-bg-active
+            port: {number: 80}
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: demo-bg-preview
+  namespace: demo-bg
+spec:
+  hosts: [] # set per environment
+  gateways:
+    - istio-system/main-gateway
+  http:
+    - route:
+        - destination:
+            host: demo-bg-preview
+            port: {number: 80}

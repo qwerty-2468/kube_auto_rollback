@@ -1,0 +1,18 @@
+resources:
+  - ../../base
+patches:
+  - target: { kind: VirtualService, name: demo-bg }
+    patch: |-
+      - op: replace
+        path: /spec/hosts
+        value: [bg.prod.internal]
+  - target: { kind: VirtualService, name: demo-bg-preview }
+    patch: |-
+      - op: replace
+        path: /spec/hosts
+        value: [bg-preview.prod.internal]
+  - target: { kind: Deployment, name: loadgen }
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env/0/value
+        value: bg.prod.internal

@@ -1,0 +1,5 @@
+- name: Install k3s
+  ansible.builtin.import_playbook: playbooks/01-k3s.yml
+
+- name: Bootstrap Argo CD
+  ansible.builtin.import_playbook: playbooks/02-bootstrap.yml

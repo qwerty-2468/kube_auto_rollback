@@ -1,0 +1,21 @@
+# Argo Rollouts rewrites the weights of the `primary` route during a canary.
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: demo
+  namespace: demo
+spec:
+  hosts: [] # set per environment
+  gateways:
+    - istio-system/main-gateway
+  http:
+    - name: primary
+      route:
+        - destination:
+            host: demo-stable
+            port: {number: 80}
+          weight: 100
+        - destination:
+            host: demo-canary
+            port: {number: 80}
+          weight: 0

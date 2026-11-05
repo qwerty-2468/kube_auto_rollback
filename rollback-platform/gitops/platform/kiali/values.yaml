@@ -1,0 +1,23 @@
+# Read-only graph of the mesh. Argo CD owns all Istio config, so editing from
+# Kiali would only be reverted by self-heal: view-only, no login (NetBird only).
+auth:
+  strategy: anonymous
+deployment:
+  view_only_mode: true
+  resources:
+    requests: { cpu: 10m, memory: 128Mi }
+    limits: { memory: 512Mi }
+server:
+  web_root: /
+external_services:
+  prometheus:
+    url: http://prometheus-server.monitoring.svc.cluster.local
+  grafana:
+    enabled: true
+    internal_url: http://grafana.monitoring.svc.cluster.local
+  tracing:
+    enabled: false
+login_token:
+  # secret:<name>:<key> makes the chart mount that secret instead of
+  # generating a random key on every render.
+  signing_key: secret:kiali-signing-key:key

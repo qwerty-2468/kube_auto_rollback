@@ -1,0 +1,14 @@
+autoscaleEnabled: false
+replicaCount: 1
+resources:
+  requests: {cpu: 100m, memory: 256Mi}
+  limits: {memory: 1Gi}
+meshConfig:
+  # Prometheus scrapes Envoy directly on 15090 (envoy-stats job), so the
+  # merged-metrics annotations would only produce duplicate series.
+  enablePrometheusMerge: false
+global:
+  proxy:
+    resources:
+      requests: {cpu: 10m, memory: 64Mi}
+      limits: {memory: 128Mi}

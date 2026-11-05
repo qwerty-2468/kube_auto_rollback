@@ -1,0 +1,63 @@
+# Relative checks: the canary against a fresh baseline of the stable version,
+# started together and given the same traffic, so startup effects and
+# node-wide slowness cancel out. Used by the experiment step in rollout.yaml.
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: canary-vs-baseline
+  namespace: demo
+spec:
+  metrics:
+    # Errors: canary 5xx share minus baseline 5xx share.
+    - name: error-delta
+      interval: 20s
+      initialDelay: 30s
+      failureLimit: 1
+      successCondition: len(result) > 0 && result[0] <= 0.05
+      provider:
+        prometheus:
+          address: http://prometheus-server.monitoring.svc.cluster.local
+          query: |
+            (sum(rate(istio_requests_total{reporter="source",
+              destination_service_name="demo-exp-canary", response_code=~"5.*"}[1m])) or vector(0))
+            / sum(rate(istio_requests_total{reporter="source",
+              destination_service_name="demo-exp-canary"}[1m]))
+            -
+            (sum(rate(istio_requests_total{reporter="source",
+              destination_service_name="demo-exp-baseline", response_code=~"5.*"}[1m])) or vector(0))
+            / sum(rate(istio_requests_total{reporter="source",
+              destination_service_name="demo-exp-baseline"}[1m]))
+
+    # Latency: canary p95 minus baseline p95, in ms. A difference, not a ratio:
+    # at a few ms, 4 vs 7 ms would be a 1.75x "regression".
+    - name: latency-delta
+      interval: 20s
+      initialDelay: 30s
+      failureLimit: 1
+      successCondition: len(result) > 0 && result[0] <= 100
+      provider:
+        prometheus:
+          address: http://prometheus-server.monitoring.svc.cluster.local
+          query: |
+            histogram_quantile(0.95, sum by (le) (rate(istio_request_duration_milliseconds_bucket{
+              reporter="source", destination_service_name="demo-exp-canary"}[1m])))
+            -
+            histogram_quantile(0.95, sum by (le) (rate(istio_request_duration_milliseconds_bucket{
+              reporter="source", destination_service_name="demo-exp-baseline"}[1m])))
+
+    # Memory: canary growth minus baseline growth, MiB/s. Both pods start at
+    # the same time, so the startup jump cancels out. Pods are picked by name
+    # (no kube-state-metrics for hash labels); check the names on the dry run.
+    - name: memory-delta
+      interval: 20s
+      initialDelay: 60s
+      failureLimit: 0
+      successCondition: len(result) > 0 && result[0] <= 0.05
+      provider:
+        prometheus:
+          address: http://prometheus-server.monitoring.svc.cluster.local
+          query: |
+            (max(deriv(container_memory_working_set_bytes{namespace="demo", container="app",
+              pod=~"demo-.+-canary-.*"}[1m]))
+            - max(deriv(container_memory_working_set_bytes{namespace="demo", container="app",
+              pod=~"demo-.+-baseline-.*"}[1m]))) / 1048576

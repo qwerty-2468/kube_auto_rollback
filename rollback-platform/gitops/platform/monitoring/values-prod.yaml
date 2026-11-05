@@ -1,0 +1,4 @@
+server:
+  retention: 7d
+  persistentVolume:
+    size: 8Gi

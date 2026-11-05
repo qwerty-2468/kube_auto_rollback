@@ -1,0 +1,27 @@
+# S5: experiment, then the canary.
+# Strategies and hypotheses: docs/thesis-test-plan.md, sections 2 and 4.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches:
+  - target: {kind: Rollout, name: demo}
+    patch: |-
+      # Background canary-health from the pause after setWeight 10.
+      - op: replace
+        path: /spec/strategy/canary/analysis/startingStep
+        value: 2
+      - op: replace
+        path: /spec/strategy/canary/steps
+        value:
+          # E: canary vs a fresh baseline of stable, 20% of the traffic each
+          - experiment:
+              duration: 3m
+              templates:
+                - {name: baseline, specRef: stable, replicas: 1, weight: 20, service: {name: demo-exp-baseline}}
+                - {name: canary, specRef: canary, replicas: 1, weight: 20, service: {name: demo-exp-canary}}
+              analyses:
+                - {name: compare, templateName: canary-vs-baseline}
+          # C: real traffic in steps; canary-health runs in the background
+          - setWeight: 10
+          - pause: {duration: 1m}
+          - setWeight: 50
+          - pause: {duration: 1m}

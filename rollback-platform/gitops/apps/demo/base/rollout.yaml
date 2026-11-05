@@ -1,0 +1,97 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: demo
+  namespace: demo
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  # A canary that never becomes Ready (FAIL_READINESS) is aborted after 2 minutes
+  # instead of leaving the rollout Progressing forever.
+  progressDeadlineSeconds: 120
+  progressDeadlineAbort: true
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      containers:
+        - name: app
+          image: demo-app # replaced by the images entry in kustomization.yaml
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            # Room for a leak to be measured before it is OOMKilled.
+            limits: { memory: 128Mi }
+  strategy:
+    canary:
+      stableService: demo-stable
+      canaryService: demo-canary
+      trafficRouting:
+        managedRoutes:
+          - name: mirror-api
+        istio:
+          virtualService:
+            name: demo
+            routes: [primary]
+      # Runs from the first traffic shift to the end; any metric failing twice
+      # aborts the rollout and sends all traffic back to stable.
+      analysis:
+        templates:
+          - templateName: canary-health
+        startingStep: 7
+        args:
+          # The canary's pod-template-hash, so the memory query can pick its pods.
+          - name: canary-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      steps:
+        - setCanaryScale: # weight is 0 while mirroring, so scale the canary explicitly
+            replicas: 1
+        - setMirrorRoute: # start copying requests to the canary
+            name: mirror-api
+            percentage: 100 # copy every matching request
+            match:
+              - method: { exact: GET }
+                path: { prefix: /api/work }
+        - analysis: # blocks until mirror-health finishes; a failure aborts here
+            templates:
+              - templateName: mirror-health
+            args:
+              - name: canary-hash
+                valueFrom:
+                  podTemplateHashValue: Latest
+        - setMirrorRoute: # same name, no match = remove the route
+            name: mirror-api
+        - setCanaryScale: # back to scaling the canary with its traffic weight
+            matchTrafficWeight: true
+        # Canary against a fresh baseline of stable, side by side on 20% of the
+        # traffic each; canary-vs-baseline fails it if the canary is worse.
+        - experiment:
+            duration: 3m
+            templates:
+              - name: baseline
+                specRef: stable
+                replicas: 1
+                weight: 20
+                service: { name: demo-exp-baseline }
+              - name: canary
+                specRef: canary
+                replicas: 1
+                weight: 20
+                service: { name: demo-exp-canary }
+            analyses:
+              - name: compare
+                templateName: canary-vs-baseline
+        - setWeight: 10
+        - pause: { duration: 1m }
+        - setWeight: 50
+        - pause: { duration: 1m }

@@ -1,0 +1,72 @@
+# Kept in istio-system next to the Gateway, so they don't depend on the
+# target namespaces existing when this app syncs (wave 3).
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: argocd
+  namespace: istio-system
+spec:
+  hosts: [] # set per environment
+  gateways: [main-gateway]
+  http:
+    - route:
+        - destination:
+            host: argocd-server.argocd.svc.cluster.local
+            port: {number: 80}
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: rollouts-dashboard
+  namespace: istio-system
+spec:
+  hosts: [] # set per environment
+  gateways: [main-gateway]
+  http:
+    - route:
+        - destination:
+            host: argo-rollouts-dashboard.argo-rollouts.svc.cluster.local
+            port: {number: 3100}
+---
+# No login: reachable by anyone on NetBird who can reach the gateway.
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: prometheus
+  namespace: istio-system
+spec:
+  hosts: [] # set per environment
+  gateways: [main-gateway]
+  http:
+    - route:
+        - destination:
+            host: prometheus-server.monitoring.svc.cluster.local
+            port: {number: 80}
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: grafana
+  namespace: istio-system
+spec:
+  hosts: [] # set per environment
+  gateways: [main-gateway]
+  http:
+    - route:
+        - destination:
+            host: grafana.monitoring.svc.cluster.local
+            port: {number: 80}
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: kiali
+  namespace: istio-system
+spec:
+  hosts: [] # set per environment
+  gateways: [main-gateway]
+  http:
+    - route:
+        - destination:
+            host: kiali.istio-system.svc.cluster.local
+            port: {number: 20001}

@@ -1,0 +1,26 @@
+A: leftover annotations before: [('demo-6486f57446', 0, '2026-11-01T15:57:02Z')]
+=== s1-f6-r91: demo @ f6-notready-d619eca-14
+strategy s1 active (6dea7c8)
+   10:27:02  Healthy      step=4 exposure=0% mirror=off runs=Experiment:Successful
+trigger commit fca20c4
+   10:27:07  Healthy      step=4 exposure=0% mirror=off runs=Experiment:Successful
+   release started: 5549f45775 -> 6c4b4cb584
+   10:27:10  Progressing  step=0 exposure=0% mirror=off runs=-
+--- s1-f6-r91: timeout, caught by None, ttd None s, exposure 0.0%, user 5xx 0
+aborting the unfinished release of demo
+reset commit 30eb532 (back to stable)
+A result: timeout None None
+B: leftover annotations before cleanup: [('demo-6486f57446', 0, '2026-11-01T15:57:02Z')]
+replicaset.apps/demo-6486f57446 annotated
+B: after cleanup: []
+=== s1-f6-r92: demo @ f6-notready-d619eca-14
+   10:32:16  Healthy      step=4 exposure=0% mirror=off runs=Experiment:Successful
+trigger commit ebb3390
+   release started: 5549f45775 -> 6c4b4cb584
+   10:32:23  Progressing  step=0 exposure=0% mirror=off runs=-
+   10:34:24  Degraded     step=0 exposure=0% mirror=off runs=-
+--- s1-f6-r92: aborted, caught by progress-deadline, ttd 120.6 s, exposure 0.0%, user 5xx 0
+reset commit 91c91b2 (back to stable)
+B result: aborted progress-deadline 120.6
+after B: []
+dev back on s7 (d78ac57)

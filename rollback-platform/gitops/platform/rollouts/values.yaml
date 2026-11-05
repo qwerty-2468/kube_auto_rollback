@@ -1,0 +1,20 @@
+controller:
+  replicas: 1
+  # rollout_info / analysis_run_info for the Grafana rollback dashboard.
+  metrics:
+    enabled: true
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8090"
+  resources:
+    requests: {cpu: 50m, memory: 64Mi}
+    limits: {memory: 256Mi}
+# No login of its own: anyone who can reach rollouts.<env>.internal can promote or abort.
+# Set readonly: true to remove those buttons.
+dashboard:
+  enabled: true
+  readonly: false
+  resources:
+    requests: {cpu: 10m, memory: 32Mi}
+    limits: {memory: 128Mi}

@@ -1,0 +1,19 @@
+# S1: canary alone.
+# Strategies and hypotheses: docs/thesis-test-plan.md, sections 2 and 4.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches:
+  - target: {kind: Rollout, name: demo}
+    patch: |-
+      # Background canary-health from the pause after setWeight 10.
+      - op: replace
+        path: /spec/strategy/canary/analysis/startingStep
+        value: 1
+      - op: replace
+        path: /spec/strategy/canary/steps
+        value:
+          # C: real traffic in steps; canary-health runs in the background
+          - setWeight: 10
+          - pause: {duration: 1m}
+          - setWeight: 50
+          - pause: {duration: 1m}

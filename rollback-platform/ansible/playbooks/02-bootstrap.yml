@@ -1,0 +1,9 @@
+# Runs on the control machine against the kubeconfig context merged by 01-k3s.yml.
+- name: Bootstrap Argo CD and the root Application
+  hosts: server
+  connection: local
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  roles:
+    - argocd_bootstrap

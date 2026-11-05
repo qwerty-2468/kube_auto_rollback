@@ -1,0 +1,3 @@
+external_services:
+  grafana:
+    external_url: https://grafana.dev.internal

@@ -1,0 +1,16 @@
+resources:
+  - namespace.yaml
+  - peer-authentication.yaml
+  - services.yaml
+  - virtual-service.yaml
+  - analysis-template.yaml
+  - mirror-analysis-template.yaml
+  - experiment-analysis-template.yaml
+  - rollout.yaml
+  - loadgen.yaml
+# The demo repo's CI rewrites newTag on every release. It lives in base, so dev
+# (main) picks it up at once and prod gets it when main is pushed to release.
+images:
+  - name: demo-app
+    newName: prgdlv-auto.netbird.cloud:3000/admin/demo
+    newTag: reset-83e5c98-17

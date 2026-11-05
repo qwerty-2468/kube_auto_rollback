@@ -1,0 +1,56 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: demo-bg
+  namespace: demo-bg
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  # A new version that never becomes Ready (FAIL_READINESS) is aborted after
+  # 2 minutes; users stay on the active version the whole time.
+  progressDeadlineSeconds: 120
+  progressDeadlineAbort: true
+  selector:
+    matchLabels:
+      app: demo-bg
+  template:
+    metadata:
+      labels:
+        app: demo-bg
+    spec:
+      containers:
+        - name: app
+          image: demo-app # replaced by the images entry in kustomization.yaml
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            # Room for a leak to be measured before it is OOMKilled.
+            limits: { memory: 128Mi }
+  strategy:
+    blueGreen:
+      activeService: demo-bg-active
+      previewService: demo-bg-preview
+      # Promote as soon as the smoke test passes; no manual step.
+      autoPromotionEnabled: true
+      # Before the switch: a Job sends requests to the preview Service.
+      # No user has seen the new version yet, so a failure costs nothing.
+      prePromotionAnalysis:
+        templates:
+          - templateName: smoke-test
+      # After the switch: every user is on the new version. A failure switches
+      # the active Service back to the old ReplicaSet, which is still running.
+      postPromotionAnalysis:
+        templates:
+          - templateName: bg-post-promotion
+        args:
+          - name: new-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      # Keep the old version up longer than the post-promotion analysis runs
+      # (~2.5 min), so a rollback is a selector switch, not a cold start.
+      scaleDownDelaySeconds: 300

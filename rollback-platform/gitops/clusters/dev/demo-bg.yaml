@@ -1,0 +1,26 @@
+# Blue-green twin of demo, for comparing strategies. Its VirtualServices are
+# never edited by Argo Rollouts (promotion switches Service selectors), so
+# unlike demo it needs no ignoreDifferences.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-bg
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  project: default
+  source:
+    repoURL: http://100.83.93.156:3000/admin/rollback-platform.git
+    targetRevision: main
+    path: gitops/apps/demo-bg/overlays/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo-bg
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - SkipDryRunOnMissingResource=true

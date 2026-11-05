@@ -1,0 +1,4 @@
+server:
+  retention: 24h
+  persistentVolume:
+    size: 2Gi

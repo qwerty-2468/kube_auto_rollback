@@ -1,0 +1,433 @@
+{
+ "run_id": "pilot-s7-f4",
+ "info": {
+  "started_at": "2026-11-01T01:18:16",
+  "app": "demo",
+  "strategy": "s7",
+  "fault": "f4",
+  "image_tag": "f4-jit1500-1ad10b8-12",
+  "rep": null,
+  "notes": "pilot: P5 image build",
+  "git_commit": "fdf21ac"
+ },
+ "measurements": {
+  "outcome": "aborted",
+  "bad_hash": "8644f95d9f",
+  "stable_hash": "5f5bcd9754",
+  "caught_by": "Step/mirror-latency-p95",
+  "ttd_s": 48.3,
+  "detect_from_start_s": 66.5,
+  "ttr_s": 1.3,
+  "max_exposure_pct": 0.0,
+  "user_exposed_s": 0,
+  "release_duration_s": null,
+  "trial_pod_minutes": 1.13,
+  "mirror_s": 49.6,
+  "user": {
+   "total": 0,
+   "5xx": 0,
+   "slow": 0
+  },
+  "mirrored": {
+   "total": 208,
+   "5xx": 0,
+   "slow": 140
+  }
+ },
+ "timeline": {
+  "app": "demo",
+  "kind": "canary",
+  "namespace": "demo",
+  "label": "pilot-s7-f4",
+  "clock_skew_s": 0.052,
+  "events": [
+   {
+    "t": 1793492296.466707,
+    "snap": {
+     "rollout": {
+      "phase": "Degraded",
+      "message": "RolloutAborted: Rollout aborted update to revision 17: Step-based analysis phase error/failed: Metric \"mirror-latency-p95\" assessed Failed due to failed (2) > failureLimit (1)",
+      "abort": true,
+      "step": 0,
+      "current_hash": "54879f6bd",
+      "stable_hash": "5f5bcd9754"
+     },
+     "analysis": {
+      "demo-54879f6bd-17-2": {
+       "type": "Step",
+       "phase": "Failed",
+       "message": "Metric \"mirror-latency-p95\" assessed Failed due to failed (2) > failureLimit (1)",
+       "metrics": {
+        "mirror-success-rate": {
+         "phase": "Successful",
+         "count": 2,
+         "failed": 0,
+         "last_finished": "2026-11-01T00:18:03Z"
+        },
+        "mirror-latency-p95": {
+         "phase": "Failed",
+         "count": 2,
+         "failed": 2,
+         "last_finished": "2026-11-01T00:18:03Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-54879f6bd-g7s84": {
+       "hash": "54879f6bd",
+       "ready": true,
+       "created": "2026-11-01T00:16:58Z",
+       "deleting": false
+      },
+      "demo-5f5bcd9754-c84d8": {
+       "hash": "5f5bcd9754",
+       "ready": true,
+       "created": "2026-11-01T00:12:33Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 100,
+        "demo-canary": 0,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   },
+   {
+    "t": 1793492314.7481432,
+    "snap": {
+     "rollout": {
+      "phase": "Degraded",
+      "message": "RolloutAborted: Rollout aborted update to revision 17: Step-based analysis phase error/failed: Metric \"mirror-latency-p95\" assessed Failed due to failed (2) > failureLimit (1)",
+      "abort": true,
+      "step": 0,
+      "current_hash": "54879f6bd",
+      "stable_hash": "5f5bcd9754"
+     },
+     "analysis": {
+      "demo-54879f6bd-17-2": {
+       "type": "Step",
+       "phase": "Failed",
+       "message": "Metric \"mirror-latency-p95\" assessed Failed due to failed (2) > failureLimit (1)",
+       "metrics": {
+        "mirror-success-rate": {
+         "phase": "Successful",
+         "count": 2,
+         "failed": 0,
+         "last_finished": "2026-11-01T00:18:03Z"
+        },
+        "mirror-latency-p95": {
+         "phase": "Failed",
+         "count": 2,
+         "failed": 2,
+         "last_finished": "2026-11-01T00:18:03Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-54879f6bd-g7s84": {
+       "hash": "54879f6bd",
+       "ready": true,
+       "created": "2026-11-01T00:16:58Z",
+       "deleting": true
+      },
+      "demo-5f5bcd9754-c84d8": {
+       "hash": "5f5bcd9754",
+       "ready": true,
+       "created": "2026-11-01T00:12:33Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 100,
+        "demo-canary": 0,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   },
+   {
+    "t": 1793492335.4803112,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "waiting for all steps to complete",
+      "abort": false,
+      "step": 0,
+      "current_hash": "8644f95d9f",
+      "stable_hash": "5f5bcd9754"
+     },
+     "analysis": {},
+     "experiments": {},
+     "pods": {
+      "demo-54879f6bd-g7s84": {
+       "hash": "54879f6bd",
+       "ready": true,
+       "created": "2026-11-01T00:16:58Z",
+       "deleting": true
+      },
+      "demo-5f5bcd9754-c84d8": {
+       "hash": "5f5bcd9754",
+       "ready": true,
+       "created": "2026-11-01T00:12:33Z",
+       "deleting": false
+      },
+      "demo-8644f95d9f-27wtx": {
+       "hash": "8644f95d9f",
+       "ready": false,
+       "created": "2026-11-01T00:18:55Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 100,
+        "demo-canary": 0,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   },
+   {
+    "t": 1793492346.7581792,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "waiting for all steps to complete",
+      "abort": false,
+      "step": 0,
+      "current_hash": "8644f95d9f",
+      "stable_hash": "5f5bcd9754"
+     },
+     "analysis": {},
+     "experiments": {},
+     "pods": {
+      "demo-5f5bcd9754-c84d8": {
+       "hash": "5f5bcd9754",
+       "ready": true,
+       "created": "2026-11-01T00:12:33Z",
+       "deleting": false
+      },
+      "demo-8644f95d9f-27wtx": {
+       "hash": "8644f95d9f",
+       "ready": false,
+       "created": "2026-11-01T00:18:55Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 100,
+        "demo-canary": 0,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   },
+   {
+    "t": 1793492353.644233,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "waiting for all steps to complete",
+      "abort": false,
+      "step": 2,
+      "current_hash": "8644f95d9f",
+      "stable_hash": "5f5bcd9754"
+     },
+     "analysis": {
+      "demo-8644f95d9f-18-2": {
+       "type": "Step",
+       "phase": "Running",
+       "message": null,
+       "metrics": {}
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-5f5bcd9754-c84d8": {
+       "hash": "5f5bcd9754",
+       "ready": true,
+       "created": "2026-11-01T00:12:33Z",
+       "deleting": false
+      },
+      "demo-8644f95d9f-27wtx": {
+       "hash": "8644f95d9f",
+       "ready": true,
+       "created": "2026-11-01T00:18:55Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "mirror-api": {
+       "weights": {
+        "demo-stable": 100,
+        "demo-canary": 0,
+        "demo-exp-canary": 0
+       },
+       "mirror": "demo-canary"
+      },
+      "primary": {
+       "weights": {
+        "demo-stable": 100,
+        "demo-canary": 0,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   },
+   {
+    "t": 1793492382.8498418,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "waiting for all steps to complete",
+      "abort": false,
+      "step": 2,
+      "current_hash": "8644f95d9f",
+      "stable_hash": "5f5bcd9754"
+     },
+     "analysis": {
+      "demo-8644f95d9f-18-2": {
+       "type": "Step",
+       "phase": "Running",
+       "message": null,
+       "metrics": {
+        "mirror-success-rate": {
+         "phase": "Running",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T00:19:42Z"
+        },
+        "mirror-latency-p95": {
+         "phase": "Running",
+         "count": 1,
+         "failed": 1,
+         "last_finished": "2026-11-01T00:19:42Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-5f5bcd9754-c84d8": {
+       "hash": "5f5bcd9754",
+       "ready": true,
+       "created": "2026-11-01T00:12:33Z",
+       "deleting": false
+      },
+      "demo-8644f95d9f-27wtx": {
+       "hash": "8644f95d9f",
+       "ready": true,
+       "created": "2026-11-01T00:18:55Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "mirror-api": {
+       "weights": {
+        "demo-stable": 100,
+        "demo-canary": 0,
+        "demo-exp-canary": 0
+       },
+       "mirror": "demo-canary"
+      },
+      "primary": {
+       "weights": {
+        "demo-stable": 100,
+        "demo-canary": 0,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   },
+   {
+    "t": 1793492403.2116601,
+    "snap": {
+     "rollout": {
+      "phase": "Degraded",
+      "message": "RolloutAborted: Rollout aborted update to revision 18: Step-based analysis phase error/failed: Metric \"mirror-latency-p95\" assessed Failed due to failed (2) > failureLimit (1)",
+      "abort": true,
+      "step": 0,
+      "current_hash": "8644f95d9f",
+      "stable_hash": "5f5bcd9754"
+     },
+     "analysis": {
+      "demo-8644f95d9f-18-2": {
+       "type": "Step",
+       "phase": "Failed",
+       "message": "Metric \"mirror-latency-p95\" assessed Failed due to failed (2) > failureLimit (1)",
+       "metrics": {
+        "mirror-success-rate": {
+         "phase": "Successful",
+         "count": 2,
+         "failed": 0,
+         "last_finished": "2026-11-01T00:20:02Z"
+        },
+        "mirror-latency-p95": {
+         "phase": "Failed",
+         "count": 2,
+         "failed": 2,
+         "last_finished": "2026-11-01T00:20:02Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-5f5bcd9754-c84d8": {
+       "hash": "5f5bcd9754",
+       "ready": true,
+       "created": "2026-11-01T00:12:33Z",
+       "deleting": false
+      },
+      "demo-8644f95d9f-27wtx": {
+       "hash": "8644f95d9f",
+       "ready": true,
+       "created": "2026-11-01T00:18:55Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 100,
+        "demo-canary": 0,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   }
+  ],
+  "bad_hash": "8644f95d9f",
+  "stable_hash": "5f5bcd9754",
+  "t_start": 1793492335.4803,
+  "t_end": 1793492414.76619,
+  "outcome": "aborted"
+ }
+}

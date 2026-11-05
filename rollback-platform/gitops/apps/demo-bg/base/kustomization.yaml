@@ -1,0 +1,16 @@
+resources:
+  - namespace.yaml
+  - peer-authentication.yaml
+  - services.yaml
+  - virtual-services.yaml
+  - smoke-test.yaml
+  - post-promotion-analysis.yaml
+  - rollout.yaml
+  - loadgen.yaml
+# Set by hand, not by CI: the demo repo's CI only writes demo's newTag, so a
+# release doesn't start a canary and a blue-green rollout at the same time on
+# one node. Pick any tag the CI already built (see docs/progressive-delivery-tests.md).
+images:
+  - name: demo-app
+    newName: prgdlv-auto.netbird.cloud:3000/admin/demo
+    newTag: reset-83e5c98-17

@@ -1,0 +1,41 @@
+resources:
+  - ../../base
+patches:
+  - target: {kind: Certificate, name: gateway-wildcard}
+    patch: |-
+      - op: replace
+        path: /spec/dnsNames
+        value: [dev.internal, "*.dev.internal"]
+  - target: {kind: Gateway, name: main-gateway}
+    patch: |-
+      - op: replace
+        path: /spec/servers/0/hosts
+        value: ["*.dev.internal"]
+      - op: replace
+        path: /spec/servers/1/hosts
+        value: ["*.dev.internal"]
+  - target: {kind: VirtualService, name: argocd}
+    patch: |-
+      - op: replace
+        path: /spec/hosts
+        value: [argocd.dev.internal]
+  - target: {kind: VirtualService, name: rollouts-dashboard}
+    patch: |-
+      - op: replace
+        path: /spec/hosts
+        value: [rollouts.dev.internal]
+  - target: {kind: VirtualService, name: prometheus}
+    patch: |-
+      - op: replace
+        path: /spec/hosts
+        value: [prometheus.dev.internal]
+  - target: {kind: VirtualService, name: grafana}
+    patch: |-
+      - op: replace
+        path: /spec/hosts
+        value: [grafana.dev.internal]
+  - target: {kind: VirtualService, name: kiali}
+    patch: |-
+      - op: replace
+        path: /spec/hosts
+        value: [kiali.dev.internal]

@@ -1,0 +1,72 @@
+- name: Create bootstrap namespaces
+  kubernetes.core.k8s:
+    context: "{{ argocd_bootstrap_context }}"
+    api_version: v1
+    kind: Namespace
+    name: "{{ item }}"
+  loop: "{{ argocd_bootstrap_namespaces }}"
+
+# Created here, not by Argo CD: Argo CD cannot decrypt SOPS, and a CA kept in
+# SOPS survives rebuilds, so the copy trusted on laptops stays valid.
+- name: Create internal root CA secret
+  kubernetes.core.k8s:
+    context: "{{ argocd_bootstrap_context }}"
+    definition:
+      apiVersion: v1
+      kind: Secret
+      type: kubernetes.io/tls
+      metadata:
+        name: internal-root-ca
+        namespace: cert-manager
+      data:
+        tls.crt: "{{ internal_root_ca_crt | b64encode }}"
+        tls.key: "{{ internal_root_ca_key | b64encode }}"
+  no_log: true
+
+# Same reason as the CA: the password lives in SOPS, which Argo CD can't read.
+- name: Create Grafana admin secret
+  kubernetes.core.k8s:
+    context: "{{ argocd_bootstrap_context }}"
+    definition:
+      apiVersion: v1
+      kind: Secret
+      type: Opaque
+      metadata:
+        name: grafana-admin
+        namespace: monitoring
+      stringData:
+        admin-user: admin
+        admin-password: "{{ grafana_admin_password }}"
+  no_log: true
+
+# Fixed key so Kiali's rendered config is the same on every sync; the chart
+# otherwise generates a random one and Kiali restarts on every Git push.
+- name: Create Kiali signing key secret
+  kubernetes.core.k8s:
+    context: "{{ argocd_bootstrap_context }}"
+    definition:
+      apiVersion: v1
+      kind: Secret
+      type: Opaque
+      metadata:
+        name: kiali-signing-key
+        namespace: istio-system
+      stringData:
+        key: "{{ kiali_signing_key }}"
+  no_log: true
+
+- name: Install Argo CD
+  kubernetes.core.helm:
+    context: "{{ argocd_bootstrap_context }}"
+    name: argocd
+    chart_ref: argo-cd
+    chart_repo_url: https://argoproj.github.io/argo-helm
+    chart_version: "{{ argocd_bootstrap_chart_version }}"
+    release_namespace: argocd
+    wait: true
+    values: "{{ lookup('ansible.builtin.template', 'argocd-values.yaml.j2') | from_yaml }}"
+
+- name: Apply root Application
+  kubernetes.core.k8s:
+    context: "{{ argocd_bootstrap_context }}"
+    definition: "{{ lookup('ansible.builtin.template', 'root-application.yaml.j2') | from_yaml }}"

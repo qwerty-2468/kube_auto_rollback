@@ -1,0 +1,35 @@
+# S4: mirroring, then the canary.
+# Strategies and hypotheses: docs/thesis-test-plan.md, sections 2 and 4.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches:
+  - target: {kind: Rollout, name: demo}
+    patch: |-
+      # Background canary-health from the pause after setWeight 10.
+      - op: replace
+        path: /spec/strategy/canary/analysis/startingStep
+        value: 6
+      - op: replace
+        path: /spec/strategy/canary/steps
+        value:
+          # M: mirror every GET /api/work to the canary; mirror-health judges the copies
+          - setCanaryScale: {replicas: 1} # weight is 0 while mirroring
+          - setMirrorRoute:
+              name: mirror-api
+              percentage: 100
+              match:
+                - method: {exact: GET}
+                  path: {prefix: /api/work}
+          - analysis:
+              templates:
+                - templateName: mirror-health
+              args:
+                - name: canary-hash
+                  valueFrom: {podTemplateHashValue: Latest}
+          - setMirrorRoute: {name: mirror-api} # no match = remove the route
+          - setCanaryScale: {matchTrafficWeight: true}
+          # C: real traffic in steps; canary-health runs in the background
+          - setWeight: 10
+          - pause: {duration: 1m}
+          - setWeight: 50
+          - pause: {duration: 1m}

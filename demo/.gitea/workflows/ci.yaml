@@ -1,0 +1,53 @@
+name: build-and-release
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**.md"]
+  workflow_dispatch:
+
+env:
+  REGISTRY: prgdlv-auto.netbird.cloud:3000
+  IMAGE: prgdlv-auto.netbird.cloud:3000/admin/demo
+  PLATFORM_REPO: prgdlv-auto.netbird.cloud:3000/admin/rollback-platform.git
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read release.env and compute the tag
+        id: v
+        run: |
+          set -a; . ./release.env; set +a
+          TAG="${APP_VERSION}-$(git rev-parse --short HEAD)-${{ github.run_number }}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "summary=errors ${ERROR_RATE}%, latency ${LATENCY_MS}+${LATENCY_JITTER_MS}ms, readiness_fail ${FAIL_READINESS}, leak ${LEAK_MB_PER_MIN}MB/min, wrong_answer ${WRONG_ANSWER}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push image
+        run: |
+          set -a; . ./release.env; set +a
+          echo "${{ secrets.REGISTRY_TOKEN }}" | docker login "$REGISTRY" -u "${{ github.actor }}" --password-stdin
+          docker build \
+            --build-arg APP_VERSION="${{ steps.v.outputs.tag }}" \
+            --build-arg COLOR="$COLOR" \
+            --build-arg ERROR_RATE="$ERROR_RATE" \
+            --build-arg LATENCY_MS="$LATENCY_MS" \
+            --build-arg LATENCY_JITTER_MS="$LATENCY_JITTER_MS" \
+            --build-arg FAIL_READINESS="$FAIL_READINESS" \
+            --build-arg LEAK_MB_PER_MIN="$LEAK_MB_PER_MIN" \
+            --build-arg WRONG_ANSWER="$WRONG_ANSWER" \
+            -t "$IMAGE:${{ steps.v.outputs.tag }}" .
+          docker push "$IMAGE:${{ steps.v.outputs.tag }}"
+
+      # rollback-platform owns the manifests; a release is one changed line there.
+      # Argo CD (dev tracks main) starts the canary as soon as this lands.
+      - name: Point rollback-platform at the new image
+        run: |
+          git clone "http://${{ github.actor }}:${{ secrets.REGISTRY_TOKEN }}@${PLATFORM_REPO}" platform
+          cd platform
+          sed -i "s|^\([[:space:]]*newTag:\).*|\1 ${{ steps.v.outputs.tag }}|" gitops/apps/demo/base/kustomization.yaml
+          git config user.name "gitea-actions"
+          git config user.email "actions@gitea.local"
+          git commit -am "demo: release ${{ steps.v.outputs.tag }} (${{ steps.v.outputs.summary }})"
+          git push origin HEAD:main

@@ -1,0 +1,358 @@
+{
+ "run_id": "s1-f1-r1",
+ "info": {
+  "started_at": "2026-11-01T13:32:59",
+  "app": "demo",
+  "strategy": "s1",
+  "fault": "f1",
+  "image_tag": "f1-err30-ea9490b-10",
+  "rep": 1,
+  "notes": "",
+  "git_commit": "461a245"
+ },
+ "measurements": {
+  "outcome": "aborted",
+  "bad_hash": "79c74874c6",
+  "stable_hash": "5549f45775",
+  "caught_by": "Background/success-rate",
+  "ttd_s": 57.0,
+  "detect_from_start_s": 67.8,
+  "ttr_s": 1.8,
+  "max_exposure_pct": 10.0,
+  "user_exposed_s": 58.8,
+  "release_duration_s": null,
+  "trial_pod_minutes": 1.34,
+  "mirror_s": null,
+  "user": {
+   "total": 21,
+   "5xx": 6,
+   "slow": 0,
+   "window": [
+    1793536384,
+    1793536488
+   ]
+  }
+ },
+ "timeline": {
+  "app": "demo",
+  "kind": "canary",
+  "namespace": "demo",
+  "label": "s1-f1-r1",
+  "clock_skew_s": 0.182,
+  "events": [
+   {
+    "t": 1793536380.456991,
+    "snap": {
+     "rollout": {
+      "phase": "Healthy",
+      "message": null,
+      "abort": false,
+      "step": 4,
+      "current_hash": "5549f45775",
+      "stable_hash": "5549f45775"
+     },
+     "analysis": {
+      "demo-5549f45775-23": {
+       "type": "Background",
+       "phase": "Successful",
+       "message": "Run Terminated",
+       "metrics": {
+        "success-rate": {
+         "phase": "Successful",
+         "count": 4,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:11:17Z"
+        },
+        "latency-p95": {
+         "phase": "Successful",
+         "count": 4,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:11:17Z"
+        },
+        "memory-growth": {
+         "phase": "Successful",
+         "count": 2,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:11:17Z"
+        }
+       }
+      },
+      "demo-5549f45775-23-2": {
+       "type": "Step",
+       "phase": "Successful",
+       "message": null,
+       "metrics": {
+        "mirror-latency-p95": {
+         "phase": "Successful",
+         "count": 3,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:05:50Z"
+        },
+        "mirror-success-rate": {
+         "phase": "Successful",
+         "count": 3,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:05:50Z"
+        }
+       }
+      },
+      "demo-5549f45775-23-5-compare": {
+       "type": "Experiment",
+       "phase": "Successful",
+       "message": "Run Terminated",
+       "metrics": {
+        "error-delta": {
+         "phase": "Successful",
+         "count": 8,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:08:57Z"
+        },
+        "latency-delta": {
+         "phase": "Successful",
+         "count": 8,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:08:57Z"
+        },
+        "memory-delta": {
+         "phase": "Successful",
+         "count": 6,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:08:47Z"
+        }
+       }
+      }
+     },
+     "experiments": {
+      "demo-5549f45775-23-5": "Successful"
+     },
+     "pods": {
+      "demo-5549f45775-brmgf": {
+       "hash": "5549f45775",
+       "ready": true,
+       "created": "2026-11-01T12:09:05Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 100,
+        "demo-canary": 0,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   },
+   {
+    "t": 1793536388.0491,
+    "snap": {
+     "rollout": {
+      "phase": "Progressing",
+      "message": "waiting for all steps to complete",
+      "abort": false,
+      "step": 0,
+      "current_hash": "79c74874c6",
+      "stable_hash": "5549f45775"
+     },
+     "analysis": {},
+     "experiments": {},
+     "pods": {
+      "demo-5549f45775-brmgf": {
+       "hash": "5549f45775",
+       "ready": true,
+       "created": "2026-11-01T12:09:05Z",
+       "deleting": false
+      },
+      "demo-79c74874c6-d4mjj": {
+       "hash": "79c74874c6",
+       "ready": false,
+       "created": "2026-11-01T12:33:05Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 100,
+        "demo-canary": 0,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   },
+   {
+    "t": 1793536398.8458,
+    "snap": {
+     "rollout": {
+      "phase": "Paused",
+      "message": "CanaryPauseStep",
+      "abort": false,
+      "step": 1,
+      "current_hash": "79c74874c6",
+      "stable_hash": "5549f45775"
+     },
+     "analysis": {
+      "demo-79c74874c6-42": {
+       "type": "Background",
+       "phase": "Running",
+       "message": null,
+       "metrics": {}
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-5549f45775-brmgf": {
+       "hash": "5549f45775",
+       "ready": true,
+       "created": "2026-11-01T12:09:05Z",
+       "deleting": false
+      },
+      "demo-79c74874c6-d4mjj": {
+       "hash": "79c74874c6",
+       "ready": true,
+       "created": "2026-11-01T12:33:05Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 90,
+        "demo-canary": 10,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   },
+   {
+    "t": 1793536428.113326,
+    "snap": {
+     "rollout": {
+      "phase": "Paused",
+      "message": "CanaryPauseStep",
+      "abort": false,
+      "step": 1,
+      "current_hash": "79c74874c6",
+      "stable_hash": "5549f45775"
+     },
+     "analysis": {
+      "demo-79c74874c6-42": {
+       "type": "Background",
+       "phase": "Running",
+       "message": null,
+       "metrics": {
+        "latency-p95": {
+         "phase": "Running",
+         "count": 1,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:33:46Z"
+        },
+        "success-rate": {
+         "phase": "Running",
+         "count": 1,
+         "failed": 1,
+         "last_finished": "2026-11-01T12:33:46Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-5549f45775-brmgf": {
+       "hash": "5549f45775",
+       "ready": true,
+       "created": "2026-11-01T12:09:05Z",
+       "deleting": false
+      },
+      "demo-79c74874c6-d4mjj": {
+       "hash": "79c74874c6",
+       "ready": true,
+       "created": "2026-11-01T12:33:05Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 90,
+        "demo-canary": 10,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   },
+   {
+    "t": 1793536457.659414,
+    "snap": {
+     "rollout": {
+      "phase": "Degraded",
+      "message": "RolloutAborted: Rollout aborted update to revision 42: Background analysis phase error/failed: Metric \"success-rate\" assessed Failed due to failed (2) > failureLimit (1)",
+      "abort": true,
+      "step": 0,
+      "current_hash": "79c74874c6",
+      "stable_hash": "5549f45775"
+     },
+     "analysis": {
+      "demo-79c74874c6-42": {
+       "type": "Background",
+       "phase": "Failed",
+       "message": "Metric \"success-rate\" assessed Failed due to failed (2) > failureLimit (1)",
+       "metrics": {
+        "latency-p95": {
+         "phase": "Successful",
+         "count": 2,
+         "failed": 0,
+         "last_finished": "2026-11-01T12:34:16Z"
+        },
+        "success-rate": {
+         "phase": "Failed",
+         "count": 2,
+         "failed": 2,
+         "last_finished": "2026-11-01T12:34:16Z"
+        }
+       }
+      }
+     },
+     "experiments": {},
+     "pods": {
+      "demo-5549f45775-brmgf": {
+       "hash": "5549f45775",
+       "ready": true,
+       "created": "2026-11-01T12:09:05Z",
+       "deleting": false
+      },
+      "demo-79c74874c6-d4mjj": {
+       "hash": "79c74874c6",
+       "ready": true,
+       "created": "2026-11-01T12:33:05Z",
+       "deleting": false
+      }
+     },
+     "routes": {
+      "primary": {
+       "weights": {
+        "demo-stable": 100,
+        "demo-canary": 0,
+        "demo-exp-canary": 0
+       },
+       "mirror": null
+      }
+     }
+    }
+   }
+  ],
+  "bad_hash": "79c74874c6",
+  "stable_hash": "5549f45775",
+  "t_start": 1793536388.049001,
+  "t_end": 1793536468.5873642,
+  "outcome": "aborted"
+ }
+}

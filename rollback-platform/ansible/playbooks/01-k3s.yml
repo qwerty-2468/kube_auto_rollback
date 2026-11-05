@@ -1,0 +1,24 @@
+# Single-node cluster: one host in `server`, no `agent` hosts.
+- name: Install k3s with the official collection
+  ansible.builtin.import_playbook: k3s.orchestration.site
+
+# The collection writes /etc/rancher/k3s/registries.yaml but never restarts k3s,
+# and k3s only reads that file at startup.
+- name: Apply registry config changes to a running k3s
+  hosts: server
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Compare registries.yaml with the last k3s start
+      ansible.builtin.shell: |
+        started=$(date -d "$(systemctl show k3s -p ActiveEnterTimestamp --value)" +%s)
+        changed=$(stat -c %Y /etc/rancher/k3s/registries.yaml)
+        if [ "$changed" -gt "$started" ]; then echo restart; else echo current; fi
+      register: k3s_registry_state
+      changed_when: false
+
+    - name: Restart k3s to load the new registry config
+      ansible.builtin.systemd:
+        name: k3s
+        state: restarted
+      when: k3s_registry_state.stdout == "restart"

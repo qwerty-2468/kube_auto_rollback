@@ -1,0 +1,335 @@
+# Trial runner configuration: where things are, which image is which fault,
+# and which strategy x fault cells to run. See docs/thesis-test-plan.md.
+
+[cluster]
+context = "k3s-dev"
+prometheus = "https://prometheus.dev.internal"
+ca_file = "docs/ca/dev-root-ca.crt" # relative to the repo root
+poll_seconds = 2
+timeout_minutes = 20
+
+# One entry per app under test. kind decides how exposure is read:
+# canary  -> weights in the VirtualService
+# bluegreen -> which hash the active Service selects
+[apps.demo]
+kind = "canary"
+namespace = "demo"
+rollout = "demo"
+virtual_service = "demo"
+reset_tag = "reset-83e5c98-17"
+kustomization = "gitops/apps/demo/base/kustomization.yaml"
+
+[apps.demo-bg]
+kind = "bluegreen"
+namespace = "demo-bg"
+rollout = "demo-bg"
+active_service = "demo-bg-active"
+reset_tag = "reset-83e5c98-17"
+kustomization = "gitops/apps/demo-bg/base/kustomization.yaml"
+
+# Fault ID -> image tag. A trial's tag must differ from the app's reset_tag,
+# or Git doesn't change and no rollout starts.
+[faults]
+f0 = "f0-healthy-abb287d-9"   # healthy
+f1 = "f1-err30-ea9490b-10"     # ERROR_RATE=30
+f2 = "f2-err2-094aa3c-15"      # ERROR_RATE=2
+f3 = "f3-lat800-8c0dbd3-11"    # LATENCY_MS=800
+f4 = "f4-jit1500-1ad10b8-12"   # LATENCY_JITTER_MS=1500
+f5 = "f5-leak20-bc6a3b3-13"    # LEAK_MB_PER_MIN=20
+f6 = "f6-notready-d619eca-14"  # FAIL_READINESS=true
+f8 = "f8-wrong-e6d8d31-16"     # WRONG_ANSWER=true
+
+# F6 never ends by itself (the progress deadline doesn't fire with Istio
+# routing and a canary that is never available): stop waiting after 4 min.
+[timeouts]
+f6 = 4
+
+# The matrix (docs/thesis-test-plan.md, section 4): strategies s0-s7 run on demo
+# (components/<strategy>-*), bg on demo-bg; one run per cell, grouped by strategy.
+[[cells]]
+strategy = "s0"
+fault = "f0"
+
+[[cells]]
+strategy = "s0"
+fault = "f1"
+
+[[cells]]
+strategy = "s0"
+fault = "f2"
+
+[[cells]]
+strategy = "s0"
+fault = "f3"
+
+[[cells]]
+strategy = "s0"
+fault = "f4"
+
+[[cells]]
+strategy = "s0"
+fault = "f5"
+
+[[cells]]
+strategy = "s0"
+fault = "f6"
+
+[[cells]]
+strategy = "s0"
+fault = "f8"
+
+[[cells]]
+strategy = "s1"
+fault = "f0"
+
+[[cells]]
+strategy = "s1"
+fault = "f1"
+
+[[cells]]
+strategy = "s1"
+fault = "f2"
+
+[[cells]]
+strategy = "s1"
+fault = "f3"
+
+[[cells]]
+strategy = "s1"
+fault = "f4"
+
+[[cells]]
+strategy = "s1"
+fault = "f5"
+
+[[cells]]
+strategy = "s1"
+fault = "f6"
+
+[[cells]]
+strategy = "s1"
+fault = "f8"
+
+[[cells]]
+strategy = "s2"
+fault = "f0"
+
+[[cells]]
+strategy = "s2"
+fault = "f1"
+
+[[cells]]
+strategy = "s2"
+fault = "f2"
+
+[[cells]]
+strategy = "s2"
+fault = "f3"
+
+[[cells]]
+strategy = "s2"
+fault = "f4"
+
+[[cells]]
+strategy = "s2"
+fault = "f5"
+
+[[cells]]
+strategy = "s2"
+fault = "f6"
+
+[[cells]]
+strategy = "s2"
+fault = "f8"
+
+[[cells]]
+strategy = "s3"
+fault = "f0"
+
+[[cells]]
+strategy = "s3"
+fault = "f1"
+
+[[cells]]
+strategy = "s3"
+fault = "f2"
+
+[[cells]]
+strategy = "s3"
+fault = "f3"
+
+[[cells]]
+strategy = "s3"
+fault = "f4"
+
+[[cells]]
+strategy = "s3"
+fault = "f5"
+
+[[cells]]
+strategy = "s3"
+fault = "f6"
+
+[[cells]]
+strategy = "s3"
+fault = "f8"
+
+[[cells]]
+strategy = "s4"
+fault = "f0"
+
+[[cells]]
+strategy = "s4"
+fault = "f1"
+
+[[cells]]
+strategy = "s4"
+fault = "f2"
+
+[[cells]]
+strategy = "s4"
+fault = "f3"
+
+[[cells]]
+strategy = "s4"
+fault = "f4"
+
+[[cells]]
+strategy = "s4"
+fault = "f5"
+
+[[cells]]
+strategy = "s4"
+fault = "f6"
+
+[[cells]]
+strategy = "s4"
+fault = "f8"
+
+[[cells]]
+strategy = "s5"
+fault = "f0"
+
+[[cells]]
+strategy = "s5"
+fault = "f1"
+
+[[cells]]
+strategy = "s5"
+fault = "f2"
+
+[[cells]]
+strategy = "s5"
+fault = "f3"
+
+[[cells]]
+strategy = "s5"
+fault = "f4"
+
+[[cells]]
+strategy = "s5"
+fault = "f5"
+
+[[cells]]
+strategy = "s5"
+fault = "f6"
+
+[[cells]]
+strategy = "s5"
+fault = "f8"
+
+[[cells]]
+strategy = "s6"
+fault = "f0"
+
+[[cells]]
+strategy = "s6"
+fault = "f1"
+
+[[cells]]
+strategy = "s6"
+fault = "f2"
+
+[[cells]]
+strategy = "s6"
+fault = "f3"
+
+[[cells]]
+strategy = "s6"
+fault = "f4"
+
+[[cells]]
+strategy = "s6"
+fault = "f5"
+
+[[cells]]
+strategy = "s6"
+fault = "f6"
+
+[[cells]]
+strategy = "s6"
+fault = "f8"
+
+[[cells]]
+strategy = "s7"
+fault = "f0"
+
+[[cells]]
+strategy = "s7"
+fault = "f1"
+
+[[cells]]
+strategy = "s7"
+fault = "f2"
+
+[[cells]]
+strategy = "s7"
+fault = "f3"
+
+[[cells]]
+strategy = "s7"
+fault = "f4"
+
+[[cells]]
+strategy = "s7"
+fault = "f5"
+
+[[cells]]
+strategy = "s7"
+fault = "f6"
+
+[[cells]]
+strategy = "s7"
+fault = "f8"
+
+[[cells]]
+strategy = "bg"
+fault = "f0"
+
+[[cells]]
+strategy = "bg"
+fault = "f1"
+
+[[cells]]
+strategy = "bg"
+fault = "f2"
+
+[[cells]]
+strategy = "bg"
+fault = "f3"
+
+[[cells]]
+strategy = "bg"
+fault = "f4"
+
+[[cells]]
+strategy = "bg"
+fault = "f5"
+
+[[cells]]
+strategy = "bg"
+fault = "f6"
+
+[[cells]]
+strategy = "bg"
+fault = "f8"

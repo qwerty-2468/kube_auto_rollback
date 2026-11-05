@@ -1,0 +1,6 @@
+# S7: mirroring, then the experiment, then the canary (all three mechanisms).
+# This is base/rollout.yaml as it is, so the component changes nothing; it
+# exists so the dev overlay always names the strategy under test.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches: [] # Kustomize rejects a component with no fields as "empty"

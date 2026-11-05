@@ -1,0 +1,8 @@
+# Signs with the root CA that Ansible stores in cert-manager/internal-root-ca.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: internal-ca
+spec:
+  ca:
+    secretName: internal-root-ca

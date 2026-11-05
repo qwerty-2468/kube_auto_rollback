@@ -1,0 +1,13 @@
+# The Gateway resource selects on this label.
+labels:
+  istio: ingressgateway
+# The envoy-stats job already scrapes 15090; the chart's default annotation
+# would add a second copy of every gateway series via the kubernetes-pods job.
+podAnnotations:
+  prometheus.io/scrape: "false"
+autoscaling:
+  enabled: false
+replicaCount: 1
+resources:
+  requests: {cpu: 50m, memory: 64Mi}
+  limits: {memory: 256Mi}

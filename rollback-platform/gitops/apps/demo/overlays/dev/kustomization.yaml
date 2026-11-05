@@ -1,0 +1,17 @@
+resources:
+  - ../../base
+# The strategy under test: exactly one of s0-none ... s7-all
+# (docs/thesis-test-plan.md, section 7). The trial runner edits this line.
+components:
+  - ../../components/s7-all
+patches:
+  - target: {kind: VirtualService, name: demo}
+    patch: |-
+      - op: replace
+        path: /spec/hosts
+        value: [app.dev.internal]
+  - target: {kind: Deployment, name: loadgen}
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env/0/value
+        value: app.dev.internal
