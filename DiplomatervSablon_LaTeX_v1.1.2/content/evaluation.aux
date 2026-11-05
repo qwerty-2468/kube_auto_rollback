@@ -1,0 +1,156 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\citation{ArgoCD}
+\@writefile{toc}{\select@language{english} \contentsline {chapter}{\numberline {3}Evaluation}{4}{chapter.3}\protected@file@percent }
+\@writefile{lof}{\select@language{english} \addvspace {10\p@ }}
+\@writefile{lot}{\select@language{english} \addvspace {10\p@ }}
+\newlabel{sec:Evaluation}{{3}{4}{Evaluation}{chapter.3}{}}
+\@writefile{toc}{\select@language{english} \contentsline {section}{\numberline {3.1}Research questions}{4}{section.3.1}\protected@file@percent }
+\newlabel{sec:EvalQuestions}{{3.1}{4}{Research questions}{section.3.1}{}}
+\citation{IstioVirtualService}
+\@writefile{toc}{\select@language{english} \contentsline {section}{\numberline {3.2}Experimental setup}{5}{section.3.2}\protected@file@percent }
+\newlabel{sec:EvalSetup}{{3.2}{5}{Experimental setup}{section.3.2}{}}
+\@writefile{toc}{\select@language{english} \contentsline {subsection}{\numberline {3.2.1}Environment and load}{5}{subsection.3.2.1}\protected@file@percent }
+\newlabel{sec:EvalEnvironment}{{3.2.1}{5}{Environment and load}{subsection.3.2.1}{}}
+\@writefile{toc}{\select@language{english} \contentsline {subsection}{\numberline {3.2.2}Fault injection}{5}{subsection.3.2.2}\protected@file@percent }
+\newlabel{sec:EvalFaults}{{3.2.2}{5}{Fault injection}{subsection.3.2.2}{}}
+\@writefile{lot}{\select@language{english} \contentsline {table}{\numberline {3.1}{\ignorespaces Injected faults. Each is a separate image built from the same source commit. (F7, an environment fault, was dropped from the scope; its identifier was kept free.)}}{5}{table.caption.5}\protected@file@percent }
+\newlabel{tab:EvalFaults}{{3.1}{5}{Injected faults. Each is a separate image built from the same source commit. (F7, an environment fault, was dropped from the scope; its identifier was kept free.)}{table.caption.5}{}}
+\@writefile{toc}{\select@language{english} \contentsline {subsection}{\numberline {3.2.3}Detection mechanisms}{5}{subsection.3.2.3}\protected@file@percent }
+\newlabel{sec:EvalMechanisms}{{3.2.3}{5}{Detection mechanisms}{subsection.3.2.3}{}}
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{M -- traffic mirroring.}{5}{section*.6}\protected@file@percent }
+\citation{ArgoRolloutsExperiment}
+\citation{ArgoRolloutsBlueGreen}
+\citation{ArgoRolloutsJob}
+\citation{K8sSidecar}
+\citation{ArgoRolloutsSpec}
+\citation{Montgomery17}
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{E -- baseline experiment.}{6}{section*.7}\protected@file@percent }
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{C -- canary steps.}{6}{section*.8}\protected@file@percent }
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{BG -- blue-green with a smoke test.}{6}{section*.9}\protected@file@percent }
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{The progress deadline.}{6}{section*.10}\protected@file@percent }
+\@writefile{toc}{\select@language{english} \contentsline {subsection}{\numberline {3.2.4}Strategies}{6}{subsection.3.2.4}\protected@file@percent }
+\newlabel{sec:EvalStrategies}{{3.2.4}{6}{Strategies}{subsection.3.2.4}{}}
+\citation{KustomizeComponents}
+\@writefile{lot}{\select@language{english} \contentsline {table}{\numberline {3.2}{\ignorespaces The strategies under test. M: mirroring, E: baseline experiment, C: canary steps.}}{7}{table.caption.11}\protected@file@percent }
+\newlabel{tab:EvalStrategies}{{3.2}{7}{The strategies under test. M: mirroring, E: baseline experiment, C: canary steps}{table.caption.11}{}}
+\@writefile{toc}{\select@language{english} \contentsline {section}{\numberline {3.3}Trial automation}{7}{section.3.3}\protected@file@percent }
+\newlabel{sec:EvalRunner}{{3.3}{7}{Trial automation}{section.3.3}{}}
+\@writefile{toc}{\select@language{english} \contentsline {subsection}{\numberline {3.3.1}A trial as a sequence of commits}{7}{subsection.3.3.1}\protected@file@percent }
+\newlabel{sec:EvalTrial}{{3.3.1}{7}{A trial as a sequence of commits}{subsection.3.3.1}{}}
+\citation{IstioMetrics}
+\citation{PromHistograms}
+\citation{PromQL}
+\@writefile{toc}{\select@language{english} \contentsline {subsection}{\numberline {3.3.2}Observation}{8}{subsection.3.3.2}\protected@file@percent }
+\newlabel{sec:EvalObservation}{{3.3.2}{8}{Observation}{subsection.3.3.2}{}}
+\@writefile{toc}{\select@language{english} \contentsline {subsection}{\numberline {3.3.3}Measurements}{8}{subsection.3.3.3}\protected@file@percent }
+\newlabel{sec:EvalMeasurements}{{3.3.3}{8}{Measurements}{subsection.3.3.3}{}}
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{Exact counting.}{8}{section*.13}\protected@file@percent }
+\@writefile{lot}{\select@language{english} \contentsline {table}{\numberline {3.3}{\ignorespaces Measurements recorded for every trial.}}{9}{table.caption.12}\protected@file@percent }
+\newlabel{tab:EvalMeasurements}{{3.3}{9}{Measurements recorded for every trial}{table.caption.12}{}}
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{Validation.}{9}{section*.14}\protected@file@percent }
+\@writefile{toc}{\select@language{english} \contentsline {section}{\numberline {3.4}Hypotheses}{9}{section.3.4}\protected@file@percent }
+\newlabel{sec:EvalHypotheses}{{3.4}{9}{Hypotheses}{section.3.4}{}}
+\@writefile{lot}{\select@language{english} \contentsline {table}{\numberline {3.4}{\ignorespaces Hypotheses, written before the first run: the check expected to stop the release, and the highest share of users exposed. $\times $: not caught, the faulty version reaches all users. DL: progress deadline. Job: pre-promotion smoke test. post: post-promotion analysis. pass: the healthy version was promoted, as it should be.}}{10}{table.caption.15}\protected@file@percent }
+\newlabel{tab:EvalHypotheses}{{3.4}{10}{Hypotheses, written before the first run: the check expected to stop the release, and the highest share of users exposed. \miss : not caught, the faulty version reaches all users. DL: progress deadline. Job: pre-promotion smoke test. post: post-promotion analysis. pass: the healthy version was promoted, as it should be}{table.caption.15}{}}
+\@writefile{toc}{\select@language{english} \contentsline {section}{\numberline {3.5}Results}{10}{section.3.5}\protected@file@percent }
+\newlabel{sec:EvalResults}{{3.5}{10}{Results}{section.3.5}{}}
+\@writefile{toc}{\select@language{english} \contentsline {subsection}{\numberline {3.5.1}Detection}{10}{subsection.3.5.1}\protected@file@percent }
+\newlabel{sec:EvalDetection}{{3.5.1}{10}{Detection}{subsection.3.5.1}{}}
+\@writefile{lot}{\select@language{english} \contentsline {table}{\numberline {3.5}{\ignorespaces Measured results: the check that stopped the release, and the highest share of users exposed. DL\textsubscript  {E}: the experiment's own progress deadline. hang: no check stopped the release. Other symbols as in \autoref {tab:EvalHypotheses}.}}{11}{table.caption.16}\protected@file@percent }
+\newlabel{tab:EvalDetection}{{3.5}{11}{Measured results: the check that stopped the release, and the highest share of users exposed. DL\textsubscript {E}: the experiment's own progress deadline. hang: no check stopped the release. Other symbols as in \autoref {tab:EvalHypotheses}}{table.caption.16}{}}
+\@writefile{toc}{\select@language{english} \contentsline {subsection}{\numberline {3.5.2}Time to detect and to recover}{11}{subsection.3.5.2}\protected@file@percent }
+\newlabel{sec:EvalTTD}{{3.5.2}{11}{Time to detect and to recover}{subsection.3.5.2}{}}
+\@writefile{lot}{\select@language{english} \contentsline {table}{\numberline {3.6}{\ignorespaces Time to detect, in seconds, from the first request of any kind to the new version. --: not detected (promoted). F6 never receives a request, so its column (in parentheses) is measured from the start of the release.}}{12}{table.caption.17}\protected@file@percent }
+\newlabel{tab:EvalTTD}{{3.6}{12}{Time to detect, in seconds, from the first request of any kind to the new version. --: not detected (promoted). F6 never receives a request, so its column (in parentheses) is measured from the start of the release}{table.caption.17}{}}
+\@writefile{lof}{\select@language{english} \contentsline {figure}{\numberline {3.1}{\ignorespaces Detected faults F1--F5 and F8 by time to detect and by the highest share of users exposed, one point per run, marked by the check that caught the fault. The points at 139--170\,s are F5 under S4, S6 and S7, counted from the first mirrored request.}}{12}{figure.caption.18}\protected@file@percent }
+\newlabel{fig:EvalScatter}{{3.1}{12}{Detected faults F1--F5 and F8 by time to detect and by the highest share of users exposed, one point per run, marked by the check that caught the fault. The points at 139--170\,s are F5 under S4, S6 and S7, counted from the first mirrored request}{figure.caption.18}{}}
+\@writefile{toc}{\select@language{english} \contentsline {subsection}{\numberline {3.5.3}User impact}{13}{subsection.3.5.3}\protected@file@percent }
+\newlabel{sec:EvalImpact}{{3.5.3}{13}{User impact}{subsection.3.5.3}{}}
+\@writefile{lot}{\select@language{english} \contentsline {table}{\numberline {3.7}{\ignorespaces User requests served by the faulty version / of these, answered with a 5xx code or slower than 500\,ms. \textsuperscript  {p}: the version was promoted (in the F2 and F8 columns, every strategy except BG promoted it); the count ends 30\,s after the promotion, after which the fault stays with every user until someone notices it.}}{13}{table.caption.19}\protected@file@percent }
+\newlabel{tab:EvalImpact}{{3.7}{13}{User requests served by the faulty version / of these, answered with a 5xx code or slower than 500\,ms. \textsuperscript {p}: the version was promoted (in the F2 and F8 columns, every strategy except BG promoted it); the count ends 30\,s after the promotion, after which the fault stays with every user until someone notices it}{table.caption.19}{}}
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{The experiment exposes more users than the canary.}{13}{section*.20}\protected@file@percent }
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{The experiment is better for slow faults.}{13}{section*.21}\protected@file@percent }
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{Blue-green trades early safety for late exposure.}{13}{section*.22}\protected@file@percent }
+\@writefile{toc}{\select@language{english} \contentsline {subsection}{\numberline {3.5.4}Cost of a healthy release}{14}{subsection.3.5.4}\protected@file@percent }
+\newlabel{sec:EvalCost}{{3.5.4}{14}{Cost of a healthy release}{subsection.3.5.4}{}}
+\@writefile{lot}{\select@language{english} \contentsline {table}{\numberline {3.8}{\ignorespaces Cost of a healthy release (F0): time from start to promotion, and the summed lifetime of the pods created during the trial.}}{14}{table.caption.23}\protected@file@percent }
+\newlabel{tab:EvalCost}{{3.8}{14}{Cost of a healthy release (F0): time from start to promotion, and the summed lifetime of the pods created during the trial}{table.caption.23}{}}
+\@writefile{lof}{\select@language{english} \contentsline {figure}{\numberline {3.2}{\ignorespaces Duration and pod-minutes of a healthy release per strategy.}}{14}{figure.caption.24}\protected@file@percent }
+\newlabel{fig:EvalCost}{{3.2}{14}{Duration and pod-minutes of a healthy release per strategy}{figure.caption.24}{}}
+\@writefile{toc}{\select@language{english} \contentsline {section}{\numberline {3.6}The progress deadline that did not fire}{14}{section.3.6}\protected@file@percent }
+\newlabel{sec:EvalDeadline}{{3.6}{14}{The progress deadline that did not fire}{section.3.6}{}}
+\citation{ArgoRolloutsSource}
+\@writefile{toc}{\select@language{english} \contentsline {subsection}{\numberline {3.6.1}Observation}{15}{subsection.3.6.1}\protected@file@percent }
+\newlabel{sec:EvalDeadlineObservation}{{3.6.1}{15}{Observation}{subsection.3.6.1}{}}
+\@writefile{toc}{\select@language{english} \contentsline {subsection}{\numberline {3.6.2}Root cause}{15}{subsection.3.6.2}\protected@file@percent }
+\newlabel{sec:EvalDeadlineCause}{{3.6.2}{15}{Root cause}{subsection.3.6.2}{}}
+\newlabel{lst:EvalGuard}{{3.1}{15}{The guard of the progress-deadline check in rollout/sync.go (Argo Rollouts v1.10.1)}{lstlisting.1}{}}
+\@writefile{lol}{\select@language{english} \contentsline {lstlisting}{\numberline {3.1}{\ignorespaces The guard of the progress-deadline check in rollout/sync.go (Argo Rollouts v1.10.1).}}{15}{lstlisting.1}\protected@file@percent }
+\citation{ArgoRolloutsIssue4971}
+\citation{ArgoRolloutsPR4972}
+\@writefile{toc}{\select@language{english} \contentsline {subsection}{\numberline {3.6.3}Confirmation}{16}{subsection.3.6.3}\protected@file@percent }
+\newlabel{sec:EvalDeadlineConfirmation}{{3.6.3}{16}{Confirmation}{subsection.3.6.3}{}}
+\@writefile{lot}{\select@language{english} \contentsline {table}{\numberline {3.9}{\ignorespaces Confirmation of the cause of the hang. The only difference between the two trials is the \texttt  {scale-down-deadline} annotation on the old, empty F5 ReplicaSet.}}{16}{table.caption.25}\protected@file@percent }
+\newlabel{tab:EvalConfirmation}{{3.9}{16}{Confirmation of the cause of the hang. The only difference between the two trials is the \texttt {scale-down-deadline} annotation on the old, empty F5 ReplicaSet}{table.caption.25}{}}
+\@writefile{toc}{\select@language{english} \contentsline {subsection}{\numberline {3.6.4}Relation to known issues and consequences}{17}{subsection.3.6.4}\protected@file@percent }
+\newlabel{sec:EvalDeadlineKnown}{{3.6.4}{17}{Relation to known issues and consequences}{subsection.3.6.4}{}}
+\@writefile{toc}{\select@language{english} \contentsline {section}{\numberline {3.7}Discussion}{17}{section.3.7}\protected@file@percent }
+\newlabel{sec:EvalDiscussion}{{3.7}{17}{Discussion}{section.3.7}{}}
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{RQ1: which mechanism catches what.}{17}{section*.26}\protected@file@percent }
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{RQ2: the cost.}{17}{section*.27}\protected@file@percent }
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{RQ3: absolute or relative checks.}{17}{section*.28}\protected@file@percent }
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{RQ4: combinations.}{18}{section*.29}\protected@file@percent }
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{RQ5: blue-green.}{18}{section*.30}\protected@file@percent }
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{Defence in depth and a decision guide.}{18}{section*.31}\protected@file@percent }
+\@writefile{toc}{\select@language{english} \contentsline {section}{\numberline {3.8}Threats to validity}{18}{section.3.8}\protected@file@percent }
+\newlabel{sec:EvalThreats}{{3.8}{18}{Threats to validity}{section.3.8}{}}
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{Internal validity.}{18}{section*.32}\protected@file@percent }
+\citation{Kayenta}
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{Measurement resolution.}{19}{section*.33}\protected@file@percent }
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{External validity.}{19}{section*.34}\protected@file@percent }
+\@writefile{toc}{\select@language{english} \contentsline {paragraph}{Future work.}{19}{section*.35}\protected@file@percent }
+\@setckpt{content/evaluation}{
+\setcounter{page}{20}
+\setcounter{equation}{0}
+\setcounter{enumi}{3}
+\setcounter{enumii}{0}
+\setcounter{enumiii}{0}
+\setcounter{enumiv}{0}
+\setcounter{footnote}{0}
+\setcounter{mpfootnote}{0}
+\setcounter{part}{0}
+\setcounter{chapter}{3}
+\setcounter{section}{8}
+\setcounter{subsection}{0}
+\setcounter{subsubsection}{0}
+\setcounter{paragraph}{0}
+\setcounter{subparagraph}{0}
+\setcounter{figure}{2}
+\setcounter{table}{9}
+\setcounter{footnote@add}{0}
+\setcounter{footnote@ch}{0}
+\setcounter{parentequation}{0}
+\setcounter{section@level}{4}
+\setcounter{Item}{22}
+\setcounter{Hfootnote}{0}
+\setcounter{Hy@AnnotLevel}{0}
+\setcounter{bookmark@seq@number}{31}
+\setcounter{lstnumber}{4}
+\setcounter{endNonectr}{15}
+\setcounter{currNonectr}{0}
+\setcounter{caption@flags}{2}
+\setcounter{continuedfloat}{0}
+\setcounter{NAT@ctr}{0}
+\setcounter{currexamplectr}{0}
+\setcounter{endexamplectr}{0}
+\setcounter{example}{0}
+\setcounter{currdefinitionctr}{0}
+\setcounter{enddefinitionctr}{0}
+\setcounter{definition}{0}
+\setcounter{currtheoremctr}{0}
+\setcounter{endtheoremctr}{0}
+\setcounter{theorem}{0}
+\setcounter{lstlisting}{1}
+\setcounter{romanPage}{3}
+}

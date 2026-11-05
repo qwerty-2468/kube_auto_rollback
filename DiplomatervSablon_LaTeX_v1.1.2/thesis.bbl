@@ -1,0 +1,218 @@
+\begin{thebibliography}{28}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Humble and Farley(2010)]{Humble10}
+Jez Humble and David Farley.
+\newblock \emph{Continuous Delivery: Reliable Software Releases through Build,
+  Test, and Deployment Automation}.
+\newblock Addison-Wesley, 2010.
+
+\bibitem[{The Kubernetes Authors}(2026{\natexlab{a}})]{K8sDeployment}
+{The Kubernetes Authors}.
+\newblock Deployments.
+\newblock
+  \url{https://kubernetes.io/docs/concepts/workloads/controllers/deployment/},
+  2026{\natexlab{a}}.
+\newblock Kubernetes documentation. Accessed: 2026-10-26.
+
+\bibitem[Beyer et~al.(2018)Beyer, Murphy, Rensin, Kawahara, and
+  Thorne]{SREWorkbook}
+Betsy Beyer, Niall~Richard Murphy, David~K. Rensin, Kent Kawahara, and Stephen
+  Thorne.
+\newblock \emph{The Site Reliability Workbook: Practical Ways to Implement
+  SRE}.
+\newblock O'Reilly Media, 2018.
+
+\bibitem[{The Argo Project Authors}(2026{\natexlab{a}})]{ArgoRollouts}
+{The Argo Project Authors}.
+\newblock Argo rollouts -- kubernetes progressive delivery controller.
+\newblock \url{https://argo-rollouts.readthedocs.io/en/stable/},
+  2026{\natexlab{a}}.
+\newblock Argo Rollouts documentation. Accessed: 2026-10-26.
+
+\bibitem[{Istio Authors}(2026{\natexlab{a}})]{IstioVirtualService}
+{Istio Authors}.
+\newblock Virtual service.
+\newblock
+  \url{https://istio.io/latest/docs/reference/config/networking/virtual-service/},
+  2026{\natexlab{a}}.
+\newblock Istio documentation. Accessed: 2026-10-26.
+
+\bibitem[{Prometheus Authors}(2026{\natexlab{a}})]{PromQL}
+{Prometheus Authors}.
+\newblock Querying prometheus.
+\newblock \url{https://prometheus.io/docs/prometheus/latest/querying/basics/},
+  2026{\natexlab{a}}.
+\newblock Prometheus documentation. Accessed: 2026-10-26.
+
+\bibitem[{The Argo Project Authors}(2026{\natexlab{b}})]{ArgoCD}
+{The Argo Project Authors}.
+\newblock Argo {CD} -- declarative {GitOps} {CD} for {Kubernetes}.
+\newblock \url{https://argo-cd.readthedocs.io/en/stable/}, 2026{\natexlab{b}}.
+\newblock Argo CD documentation: declarative GitOps continuous delivery for
+  Kubernetes. Accessed: 2026-11-03.
+
+\bibitem[{The Argo Project
+  Authors}(2026{\natexlab{c}})]{ArgoRolloutsExperiment}
+{The Argo Project Authors}.
+\newblock Experiment {CRD}.
+\newblock
+  \url{https://argo-rollouts.readthedocs.io/en/stable/features/experiment/},
+  2026{\natexlab{c}}.
+\newblock Argo Rollouts documentation of the Experiment resource and the
+  experiment step. Accessed: 2026-11-03.
+
+\bibitem[{The Argo Project Authors}(2026{\natexlab{d}})]{ArgoRolloutsBlueGreen}
+{The Argo Project Authors}.
+\newblock {BlueGreen} deployment strategy.
+\newblock
+  \url{https://argo-rollouts.readthedocs.io/en/stable/features/bluegreen/},
+  2026{\natexlab{d}}.
+\newblock Argo Rollouts documentation of the blue-green strategy. Accessed:
+  2026-11-03.
+
+\bibitem[{The Argo Project Authors}(2026{\natexlab{e}})]{ArgoRolloutsJob}
+{The Argo Project Authors}.
+\newblock Job metrics.
+\newblock \url{https://argo-rollouts.readthedocs.io/en/stable/analysis/job/},
+  2026{\natexlab{e}}.
+\newblock Argo Rollouts documentation of the Kubernetes Job analysis provider.
+  Accessed: 2026-11-03.
+
+\bibitem[{The Kubernetes Authors}(2026{\natexlab{b}})]{K8sSidecar}
+{The Kubernetes Authors}.
+\newblock Sidecar containers.
+\newblock
+  \url{https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/},
+  2026{\natexlab{b}}.
+\newblock Kubernetes documentation of native sidecar containers. Accessed:
+  2026-11-03.
+
+\bibitem[{The Argo Project Authors}(2026{\natexlab{f}})]{ArgoRolloutsSpec}
+{The Argo Project Authors}.
+\newblock Rollout specification.
+\newblock
+  \url{https://argo-rollouts.readthedocs.io/en/stable/features/specification/},
+  2026{\natexlab{f}}.
+\newblock Argo Rollouts documentation of the Rollout specification, including
+  progressDeadlineSeconds and progressDeadlineAbort. Accessed: 2026-11-03.
+
+\bibitem[Montgomery(2017)]{Montgomery17}
+Douglas~C. Montgomery.
+\newblock \emph{Design and Analysis of Experiments}.
+\newblock Wiley, 9th edition, 2017.
+
+\bibitem[{The Kubernetes Authors}(2026{\natexlab{c}})]{KustomizeComponents}
+{The Kubernetes Authors}.
+\newblock Kustomize components.
+\newblock
+  \url{https://kubectl.docs.kubernetes.io/guides/config_management/components/},
+  2026{\natexlab{c}}.
+\newblock Kustomize documentation of reusable configuration components.
+  Accessed: 2026-11-03.
+
+\bibitem[{Istio Authors}(2026{\natexlab{b}})]{IstioMetrics}
+{Istio Authors}.
+\newblock Istio standard metrics.
+\newblock \url{https://istio.io/latest/docs/reference/config/metrics/},
+  2026{\natexlab{b}}.
+\newblock Istio documentation of the standard request metrics and their labels.
+  Accessed: 2026-11-03.
+
+\bibitem[{Prometheus Authors}(2026{\natexlab{b}})]{PromHistograms}
+{Prometheus Authors}.
+\newblock Histograms and summaries.
+\newblock \url{https://prometheus.io/docs/practices/histograms/},
+  2026{\natexlab{b}}.
+\newblock Prometheus documentation on histograms, buckets and quantile
+  estimation. Accessed: 2026-11-03.
+
+\bibitem[{The Argo Project Authors}(2026{\natexlab{g}})]{ArgoRolloutsSource}
+{The Argo Project Authors}.
+\newblock Argo rollouts v1.10.1 source code.
+\newblock \url{https://github.com/argoproj/argo-rollouts/tree/v1.10.1},
+  2026{\natexlab{g}}.
+\newblock Source code of the Argo Rollouts controller, release v1.10.1 (files
+  rollout/sync.go, rollout/replicaset.go, rollout/canary.go). Accessed:
+  2026-11-03.
+
+\bibitem[{GitHub user report}(2026)]{ArgoRolloutsIssue4971}
+{GitHub user report}.
+\newblock Stale `scale-down-deadline' on an orphaned {ReplicaSet} causes a
+  reconcile never-ending loop and high {CPU} usage.
+\newblock \url{https://github.com/argoproj/argo-rollouts/issues/4971}, 2026.
+\newblock Argo Rollouts issue \#4971, opened 2026-08-11; describes a stale
+  scale-down-deadline annotation suppressing the progress deadline. Accessed:
+  2026-11-03.
+
+\bibitem[{GitHub user contribution}(2026)]{ArgoRolloutsPR4972}
+{GitHub user contribution}.
+\newblock fix(controller): expire stale scale-down-deadline to stop reconcile
+  loop.
+\newblock \url{https://github.com/argoproj/argo-rollouts/pull/4972}, 2026.
+\newblock Argo Rollouts pull request \#4972, unmerged at the time of access;
+  proposes ignoring expired scale-down deadlines. Accessed: 2026-11-03.
+
+\bibitem[{Spinnaker Authors}(2026)]{Kayenta}
+{Spinnaker Authors}.
+\newblock Kayenta: Automated canary service.
+\newblock \url{https://github.com/spinnaker/kayenta}, 2026.
+\newblock Kayenta, an automated canary analysis service using statistical
+  comparison of canary and baseline. Accessed: 2026-11-03.
+
+\bibitem[Jeney(2014)]{Jeney}
+Gábor Jeney.
+\newblock Hogyan néz ki egy igényes dokumentum? {N}éhány szóban az
+  alapvető tipográfiai szabályokról, 2014.
+\newblock \url{http://www.mcl.hu/~jeneyg/kinezet.pdf}.
+
+\bibitem[Wettl et~al.(2004)Wettl, Mayer, and Szabó]{Wettl04}
+Ferenc Wettl, Gyula Mayer, and Péter Szabó.
+\newblock \emph{\LaTeX~kézikönyv}.
+\newblock Panem Könyvkiadó, 2004.
+
+\bibitem[Candy(1986)]{Candy86}
+James~C. Candy.
+\newblock Decimation for sigma delta modulation.
+\newblock 34\penalty0 (1):\penalty0 72--76, 01 1986.
+\newblock \doi{10.1109/TCOM.1986.1096432}.
+
+\bibitem[Lee and Sodini(1987)]{Lee87}
+Wai~L. Lee and Charles~G. Sodini.
+\newblock A topology for higher order interpolative coders.
+\newblock In \emph{Proc.\ of the IEEE International Symposium on Circuits and
+  Systems}, pages 459--462, 05~4--7 1987.
+
+\bibitem[Kiss(2000)]{KissPhD}
+Peter Kiss.
+\newblock Adaptive digital compensation of analog circuit imperfections for
+  cascaded delta-sigma analog-to-digital converters, 04 2000.
+
+\bibitem[Schreier(2000)]{Schreier00}
+Richard Schreier.
+\newblock \emph{The Delta-Sigma Toolbox v5.2}.
+\newblock Oregon State University, 01 2000.
+\newblock \url{http://www.mathworks.com/matlabcentral/fileexchange/}.
+
+\bibitem[Mkrtychev(1997)]{Mkrtychev:1997}
+Alexey Mkrtychev.
+\newblock Models for the logic of proofs.
+\newblock In Sergei Adian and Anil Nerode, editors, \emph{Logical Foundations
+  of Computer Science}, volume 1234 of \emph{Lecture Notes in Computer
+  Science}, pages 266--275. Springer Berlin Heidelberg, 1997.
+\newblock ISBN 978-3-540-63045-6.
+\newblock \doi{10.1007/3-540-63045-7_27}.
+\newblock URL \url{http://dx.doi.org/10.1007/3-540-63045-7_27}.
+
+\bibitem[{Budapesti Műszaki és Gazdaságtudományi Egyetem Villamosmérnöki
+  és Informatikai Kar}()]{DipPortal}
+{Budapesti Műszaki és Gazdaságtudományi Egyetem Villamosmérnöki és
+  Informatikai Kar}.
+\newblock Diplomaterv portál (2011. február 26.).
+\newblock \url{http://diplomaterv.vik.bme.hu/}.
+
+\end{thebibliography}

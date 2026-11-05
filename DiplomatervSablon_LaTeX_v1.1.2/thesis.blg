@@ -1,0 +1,66 @@
+This is BibTeX, Version 0.99e (TeX Live 2026)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: thesis.aux
+The style file: unsrtnat.bst
+A level-1 auxiliary file: include/guideline.aux
+A level-1 auxiliary file: include/project.aux
+A level-1 auxiliary file: include/titlepage.aux
+A level-1 auxiliary file: include/declaration_EN.aux
+A level-1 auxiliary file: content/abstract.aux
+A level-1 auxiliary file: content/introduction.aux
+A level-1 auxiliary file: content/background.aux
+A level-1 auxiliary file: content/evaluation.aux
+A level-1 auxiliary file: content/latex-tools.aux
+A level-1 auxiliary file: content/thesis-format.aux
+A level-1 auxiliary file: content/template-usage.aux
+A level-1 auxiliary file: content/acknowledgement.aux
+A level-1 auxiliary file: content/appendices.aux
+Database file #1: bib/mybib.bib
+Warning--entry type for "KissPhD" isn't style-file defined
+--line 31 of file bib/mybib.bib
+Warning--entry type for "Jeney" isn't style-file defined
+--line 70 of file bib/mybib.bib
+Warning--empty journal in Candy86
+Warning--empty year in DipPortal
+You've used 28 entries,
+            2481 wiz_defined-function locations,
+            738 strings with 10514 characters,
+and the built_in function-call counts, 8213 in all, are:
+= -- 723
+> -- 260
+< -- 29
++ -- 140
+- -- 74
+* -- 405
+:= -- 1266
+add.period$ -- 106
+call.type$ -- 28
+change.case$ -- 52
+chr.to.int$ -- 18
+cite$ -- 30
+duplicate$ -- 455
+empty$ -- 884
+format.name$ -- 106
+if$ -- 1815
+int.to.chr$ -- 11
+int.to.str$ -- 29
+missing$ -- 11
+newline$ -- 169
+num.names$ -- 86
+pop$ -- 325
+preamble$ -- 1
+purify$ -- 28
+quote$ -- 0
+skip$ -- 290
+stack$ -- 0
+substring$ -- 135
+swap$ -- 95
+text.length$ -- 3
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 184
+warning$ -- 2
+while$ -- 64
+width$ -- 0
+write$ -- 389
+(There were 4 warnings)

@@ -1,0 +1,75 @@
+\select@language {magyar} \contentsline {chapter}{Kivonat}{i}{chapter*.2}%
+\select@language {english} \contentsline {chapter}{Abstract}{ii}{chapter*.3}%
+\select@language {english} \contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.1}%
+\select@language {english} \contentsline {chapter}{\numberline {2}Background}{2}{chapter.2}%
+\select@language {english} \contentsline {section}{\numberline {2.1}Deployment strategies}{2}{section.2.1}%
+\select@language {english} \contentsline {section}{\numberline {2.2}Argo Rollouts}{3}{section.2.2}%
+\select@language {english} \contentsline {section}{\numberline {2.3}Metric-based analysis}{3}{section.2.3}%
+\select@language {english} \contentsline {chapter}{\numberline {3}Evaluation}{4}{chapter.3}%
+\select@language {english} \contentsline {section}{\numberline {3.1}Research questions}{4}{section.3.1}%
+\select@language {english} \contentsline {section}{\numberline {3.2}Experimental setup}{5}{section.3.2}%
+\select@language {english} \contentsline {subsection}{\numberline {3.2.1}Environment and load}{5}{subsection.3.2.1}%
+\select@language {english} \contentsline {subsection}{\numberline {3.2.2}Fault injection}{5}{subsection.3.2.2}%
+\select@language {english} \contentsline {subsection}{\numberline {3.2.3}Detection mechanisms}{5}{subsection.3.2.3}%
+\select@language {english} \contentsline {paragraph}{M -- traffic mirroring.}{5}{section*.6}%
+\select@language {english} \contentsline {paragraph}{E -- baseline experiment.}{6}{section*.7}%
+\select@language {english} \contentsline {paragraph}{C -- canary steps.}{6}{section*.8}%
+\select@language {english} \contentsline {paragraph}{BG -- blue-green with a smoke test.}{6}{section*.9}%
+\select@language {english} \contentsline {paragraph}{The progress deadline.}{6}{section*.10}%
+\select@language {english} \contentsline {subsection}{\numberline {3.2.4}Strategies}{6}{subsection.3.2.4}%
+\select@language {english} \contentsline {section}{\numberline {3.3}Trial automation}{7}{section.3.3}%
+\select@language {english} \contentsline {subsection}{\numberline {3.3.1}A trial as a sequence of commits}{7}{subsection.3.3.1}%
+\select@language {english} \contentsline {subsection}{\numberline {3.3.2}Observation}{8}{subsection.3.3.2}%
+\select@language {english} \contentsline {subsection}{\numberline {3.3.3}Measurements}{8}{subsection.3.3.3}%
+\select@language {english} \contentsline {paragraph}{Exact counting.}{8}{section*.13}%
+\select@language {english} \contentsline {paragraph}{Validation.}{9}{section*.14}%
+\select@language {english} \contentsline {section}{\numberline {3.4}Hypotheses}{9}{section.3.4}%
+\select@language {english} \contentsline {section}{\numberline {3.5}Results}{10}{section.3.5}%
+\select@language {english} \contentsline {subsection}{\numberline {3.5.1}Detection}{10}{subsection.3.5.1}%
+\select@language {english} \contentsline {subsection}{\numberline {3.5.2}Time to detect and to recover}{11}{subsection.3.5.2}%
+\select@language {english} \contentsline {subsection}{\numberline {3.5.3}User impact}{13}{subsection.3.5.3}%
+\select@language {english} \contentsline {paragraph}{The experiment exposes more users than the canary.}{13}{section*.20}%
+\select@language {english} \contentsline {paragraph}{The experiment is better for slow faults.}{13}{section*.21}%
+\select@language {english} \contentsline {paragraph}{Blue-green trades early safety for late exposure.}{13}{section*.22}%
+\select@language {english} \contentsline {subsection}{\numberline {3.5.4}Cost of a healthy release}{14}{subsection.3.5.4}%
+\select@language {english} \contentsline {section}{\numberline {3.6}The progress deadline that did not fire}{14}{section.3.6}%
+\select@language {english} \contentsline {subsection}{\numberline {3.6.1}Observation}{15}{subsection.3.6.1}%
+\select@language {english} \contentsline {subsection}{\numberline {3.6.2}Root cause}{15}{subsection.3.6.2}%
+\select@language {english} \contentsline {subsection}{\numberline {3.6.3}Confirmation}{16}{subsection.3.6.3}%
+\select@language {english} \contentsline {subsection}{\numberline {3.6.4}Relation to known issues and consequences}{17}{subsection.3.6.4}%
+\select@language {english} \contentsline {section}{\numberline {3.7}Discussion}{17}{section.3.7}%
+\select@language {english} \contentsline {paragraph}{RQ1: which mechanism catches what.}{17}{section*.26}%
+\select@language {english} \contentsline {paragraph}{RQ2: the cost.}{17}{section*.27}%
+\select@language {english} \contentsline {paragraph}{RQ3: absolute or relative checks.}{17}{section*.28}%
+\select@language {english} \contentsline {paragraph}{RQ4: combinations.}{18}{section*.29}%
+\select@language {english} \contentsline {paragraph}{RQ5: blue-green.}{18}{section*.30}%
+\select@language {english} \contentsline {paragraph}{Defence in depth and a decision guide.}{18}{section*.31}%
+\select@language {english} \contentsline {section}{\numberline {3.8}Threats to validity}{18}{section.3.8}%
+\select@language {english} \contentsline {paragraph}{Internal validity.}{18}{section*.32}%
+\select@language {english} \contentsline {paragraph}{Measurement resolution.}{19}{section*.33}%
+\select@language {english} \contentsline {paragraph}{External validity.}{19}{section*.34}%
+\select@language {english} \contentsline {paragraph}{Future work.}{19}{section*.35}%
+\select@language {english} \contentsline {chapter}{\numberline {4}\LaTeX -eszközök}{20}{chapter.4}%
+\select@language {english} \contentsline {section}{\numberline {4.1}A szerkesztéshez használatos eszközök}{20}{section.4.1}%
+\select@language {english} \contentsline {section}{\numberline {4.2}A dokumentum lefordítása Windows alatt}{21}{section.4.2}%
+\select@language {english} \contentsline {section}{\numberline {4.3}Eszközök Linuxhoz}{22}{section.4.3}%
+\select@language {english} \contentsline {chapter}{\numberline {5}A dolgozat formai kivitele}{23}{chapter.5}%
+\select@language {english} \contentsline {section}{\numberline {5.1}A dolgozat kimérete}{23}{section.5.1}%
+\select@language {english} \contentsline {section}{\numberline {5.2}A dolgozat nyelve}{23}{section.5.2}%
+\select@language {english} \contentsline {section}{\numberline {5.3}A dokumentum nyomdatechnikai kivitele}{23}{section.5.3}%
+\select@language {english} \contentsline {chapter}{\numberline {6}A \LaTeX -sablon használata}{25}{chapter.6}%
+\select@language {english} \contentsline {section}{\numberline {6.1}Címkék és hivatkozások}{25}{section.6.1}%
+\select@language {english} \contentsline {section}{\numberline {6.2}Ábrák és táblázatok}{25}{section.6.2}%
+\select@language {english} \contentsline {section}{\numberline {6.3}Felsorolások és listák}{27}{section.6.3}%
+\select@language {english} \contentsline {section}{\numberline {6.4}Képletek}{28}{section.6.4}%
+\select@language {english} \contentsline {section}{\numberline {6.5}Irodalmi hivatkozások}{29}{section.6.5}%
+\select@language {english} \contentsline {section}{\numberline {6.6}A dolgozat szerkezete és a forrásfájlok}{32}{section.6.6}%
+\select@language {english} \contentsline {section}{\numberline {6.7}Alapadatok megadása}{34}{section.6.7}%
+\select@language {english} \contentsline {section}{\numberline {6.8}Új fejezet írása}{34}{section.6.8}%
+\select@language {english} \contentsline {section}{\numberline {6.9}Definíciók, tételek, példák}{34}{section.6.9}%
+\select@language {english} \contentsline {chapter}{Acknowledgements}{35}{chapter*.40}%
+\select@language {english} \contentsline {chapter}{Bibliography}{36}{chapter*.40}%
+\select@language {english} \contentsline {chapter}{Appendix}{39}{appendix*.42}%
+\select@language {english} \contentsline {section}{\numberline {A.1}Declaration on the Use of Generative Artificial Intelligence}{40}{section.A.1}%
+\select@language {english} \contentsline {section}{\numberline {A.2}A TeXstudio felülete}{41}{section.A.2}%
+\select@language {english} \contentsline {section}{\numberline {A.3}Válasz az ,,Élet, a világmindenség, meg minden'' kérdésére}{42}{section.A.3}%

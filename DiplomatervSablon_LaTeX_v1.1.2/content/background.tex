@@ -1,0 +1,70 @@
+%----------------------------------------------------------------------------
+\chapter{Background}
+\label{sec:Background}
+%----------------------------------------------------------------------------
+This chapter introduces the deployment strategies and tools the rest of the thesis builds on. \autoref{sec:DeploymentStrategies} compares the common ways of releasing a new version, \autoref{sec:ArgoRollouts} describes Argo Rollouts, the controller that performs the canary releases, and \autoref{sec:MetricAnalysis} explains how metrics collected by Istio and Prometheus decide whether a release is rolled back.
+
+%----------------------------------------------------------------------------
+\section{Deployment strategies}
+\label{sec:DeploymentStrategies}
+%----------------------------------------------------------------------------
+Continuous delivery aims to keep software in a releasable state and to make each release a small, routine event~\cite{Humble10}. Small releases lower the risk of each change, but they do not remove it: a version that passes every test can still fail under production traffic. The deployment strategy determines how many users such a faulty version reaches before it is detected.
+
+The built-in Kubernetes \emph{Deployment} object uses a rolling update by default: it replaces old pods with new ones in batches, limited by the \texttt{maxSurge} and \texttt{maxUnavailable} parameters~\cite{K8sDeployment}. A pod only receives traffic once its readiness probe succeeds, so a version that does not start is stopped early. A version that starts but returns errors or responds slowly, however, is rolled out to every pod. If the update does not finish within \texttt{progressDeadlineSeconds}, Kubernetes marks it as failed, but it does not roll it back automatically.
+
+Progressive delivery strategies expose the new version gradually and check its health at each step. \autoref{tab:Strategies} summarises the strategies relevant to this work.
+
+\begin{table}[ht]
+	\footnotesize
+	\centering
+	\begin{tabular}{ l l l }
+		\toprule
+		Strategy & Exposure of the new version & Automatic rollback \\
+		\midrule
+		Recreate & all users at once, with downtime & no \\
+		Rolling update & all users, pod by pod & no \\
+		Blue-green & all users after a single switch & on failed checks before the switch \\
+		Canary & a growing share of users & on failed metric checks at any step \\
+		\bottomrule
+	\end{tabular}
+	\caption{Comparison of deployment strategies.}
+	\label{tab:Strategies}
+\end{table}
+
+A canary release sends a small share of traffic to the new version, compares its behaviour with the stable version, and only increases the share while the comparison is favourable~\cite{SREWorkbook}. Its weakness is that some real users are still served by the faulty version during the first step. Traffic \emph{mirroring} avoids this: the service mesh copies requests to the canary and discards its responses, so the canary can be measured on real requests before any user depends on it.
+
+%----------------------------------------------------------------------------
+\section{Argo Rollouts}
+\label{sec:ArgoRollouts}
+%----------------------------------------------------------------------------
+Argo Rollouts is a Kubernetes controller that replaces the Deployment with a \emph{Rollout} custom resource supporting canary and blue-green strategies~\cite{ArgoRollouts}. A canary Rollout lists its steps explicitly, for example \texttt{setWeight} to send a percentage of traffic to the canary, \texttt{pause} to wait, and \texttt{setMirrorRoute} to mirror requests. The controller does not route traffic itself; it rewrites the routing rules of a traffic provider such as Istio.
+
+The health of a release is defined in an \emph{AnalysisTemplate}. It contains one or more metrics, each with a query, an evaluation interval, a \texttt{successCondition} and a \texttt{failureLimit}. During a release the controller creates an \emph{AnalysisRun} from the template and evaluates the metrics periodically. When a metric fails more times than its \texttt{failureLimit} allows, the Rollout is aborted: all traffic returns to the stable version and the canary is scaled down.
+
+%----------------------------------------------------------------------------
+\section{Metric-based analysis}
+\label{sec:MetricAnalysis}
+%----------------------------------------------------------------------------
+Istio is a service mesh: it places an Envoy proxy next to every application container, and these proxies handle all traffic between services~\cite{IstioVirtualService}. Because each request passes through a proxy, Istio can split or mirror traffic according to a \emph{VirtualService}, and it records standard metrics for each request, such as \texttt{istio\_requests\_total} and \texttt{istio\_request\_duration\_milliseconds}, without changing the application.
+
+Prometheus collects these metrics and evaluates queries written in PromQL~\cite{PromQL}. \autoref{lst:SuccessRate} shows the success-rate metric of the AnalysisTemplate used in this work. The query divides the rate of non-5xx responses of the canary by the rate of all its responses over the last minute, and the metric fails if the result drops below 95\%.
+
+\begin{lstlisting}[caption={Success-rate metric of the canary-health AnalysisTemplate.},label=lst:SuccessRate]
+- name: success-rate
+  interval: 30s
+  initialDelay: 30s
+  failureLimit: 1
+  successCondition: result[0] >= 0.95
+  provider:
+    prometheus:
+      address: http://prometheus-server.monitoring.svc.cluster.local
+      query: |
+        (sum(rate(istio_requests_total{reporter="source",
+          destination_service_name="demo-canary",
+          response_code!~"5.*"}[1m])) or vector(0))
+        /
+        sum(rate(istio_requests_total{reporter="source",
+          destination_service_name="demo-canary"}[1m]))
+\end{lstlisting}
+
+With \texttt{failureLimit: 1}, one failed measurement is tolerated and the second one aborts the release. This prevents a single noisy measurement from rolling back a healthy version, while a genuinely faulty one is still detected within about one minute.

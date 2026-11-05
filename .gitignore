@@ -3,7 +3,6 @@
 *.decrypted.*
 __pycache__/
 *.log
-DiplomatervSablon_LaTeX_v1.1.2/
 trash/
 .ssh/
 *.code-workspace
