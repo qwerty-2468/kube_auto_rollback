@@ -36,11 +36,12 @@ def _image_tag(cfg, app) -> str:
 def cmd_show(cfg, _args):
     print(f"cluster: {cfg.context}, prometheus: {cfg.prometheus}")
     for a in cfg.apps.values():
-        print(f"app {a.name}: {a.kind}, ns={a.namespace}, reset_tag={a.reset_tag}")
+        print(f"app {a.name}: {a.kind}, ns={a.namespace}, release={a.release.name}")
+    print("reset:", json.dumps(cfg.reset))
     print("faults:", json.dumps(cfg.faults, indent=1))
     for c in cfg.cells:
-        tag = cfg.faults.get(c["fault"], "<no image>")
-        print(f"cell {c['strategy']}/{c['fault']} x{c.get('reps', 1)}: {cfg.app_for(c['strategy']).name} @ {tag}")
+        name = cfg.faults[c["fault"]]["APP_VERSION"] if c["fault"] in cfg.faults else "<no fault>"
+        print(f"cell {c['strategy']}/{c['fault']} x{c.get('reps', 1)}: {cfg.app_for(c['strategy']).name} @ {name}")
 
 
 def cmd_snapshot(cfg, args):

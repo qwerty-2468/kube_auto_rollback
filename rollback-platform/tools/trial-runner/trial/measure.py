@@ -24,13 +24,18 @@ def _round(x):
     return round(x, 1) if x is not None else None
 
 
-def _caught_by(snap: dict, skew: float) -> tuple[str | None, float | None]:
-    """The failing metric that finished first, and when (local time)."""
+def _caught_by(snap: dict, skew: float, t_start: float) -> tuple[str | None, float | None]:
+    """The failing metric that finished first after the start, and when (local time).
+
+    Failures from before the start belong to an earlier release of the same pod
+    template (same hash, older revision), whose runs may still be around.
+    """
     failures = [
-        (_ts(m["last_finished"]) - skew, f"{run['type']}/{name}")
+        (t, f"{run['type']}/{name}")
         for run in snap["analysis"].values()
         for name, m in run["metrics"].items()
         if m["phase"] in ("Failed", "Error") and m["last_finished"]
+        and (t := _ts(m["last_finished"]) - skew) >= t_start
     ]
     if not failures:
         return None, None
@@ -63,7 +68,7 @@ def _detection(tl: dict, t: dict) -> tuple[str | None, float | None]:
     if not t["abort"]:
         return None, None
     last = tl["events"][-1]["snap"]
-    name, t_detect = _caught_by(last, tl["clock_skew_s"])
+    name, t_detect = _caught_by(last, tl["clock_skew_s"], tl["t_start"])
     if name:
         return name, t_detect
     msg = last["rollout"]["message"] or ""

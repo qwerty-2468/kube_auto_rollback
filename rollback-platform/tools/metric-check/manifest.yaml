@@ -1,0 +1,275 @@
+# Metric validation: every fault of matrix.toml runs side by side for a few
+# minutes, outside the release process, so Prometheus' view of it can be compared
+# with the configured value and with what the client and the app observed.
+# Not managed by Argo CD: check.py applies it and deletes the namespace after.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: metric-check
+  labels:
+    istio-injection: enabled
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mc-f0
+  namespace: metric-check
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mc, fault: f0 }
+  template:
+    metadata:
+      labels: { app: mc, fault: f0 }
+    spec:
+      containers:
+        - name: app
+          image: IMAGE
+          env:
+            - { name: APP_VERSION, value: "mc-f0" }
+          ports:
+            - { name: http, containerPort: 8080 }
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 128Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mc-f0
+  namespace: metric-check
+spec:
+  selector: { app: mc, fault: f0 }
+  ports:
+    - { name: http, port: 80, targetPort: http }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mc-f1
+  namespace: metric-check
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mc, fault: f1 }
+  template:
+    metadata:
+      labels: { app: mc, fault: f1 }
+    spec:
+      containers:
+        - name: app
+          image: IMAGE
+          env:
+            - { name: APP_VERSION, value: "mc-f1" }
+            - { name: ERROR_RATE, value: "30" }
+          ports:
+            - { name: http, containerPort: 8080 }
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 128Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mc-f1
+  namespace: metric-check
+spec:
+  selector: { app: mc, fault: f1 }
+  ports:
+    - { name: http, port: 80, targetPort: http }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mc-f2
+  namespace: metric-check
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mc, fault: f2 }
+  template:
+    metadata:
+      labels: { app: mc, fault: f2 }
+    spec:
+      containers:
+        - name: app
+          image: IMAGE
+          env:
+            - { name: APP_VERSION, value: "mc-f2" }
+            - { name: ERROR_RATE, value: "2" }
+          ports:
+            - { name: http, containerPort: 8080 }
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 128Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mc-f2
+  namespace: metric-check
+spec:
+  selector: { app: mc, fault: f2 }
+  ports:
+    - { name: http, port: 80, targetPort: http }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mc-f3
+  namespace: metric-check
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mc, fault: f3 }
+  template:
+    metadata:
+      labels: { app: mc, fault: f3 }
+    spec:
+      containers:
+        - name: app
+          image: IMAGE
+          env:
+            - { name: APP_VERSION, value: "mc-f3" }
+            - { name: LATENCY_MS, value: "800" }
+          ports:
+            - { name: http, containerPort: 8080 }
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 128Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mc-f3
+  namespace: metric-check
+spec:
+  selector: { app: mc, fault: f3 }
+  ports:
+    - { name: http, port: 80, targetPort: http }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mc-f4
+  namespace: metric-check
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mc, fault: f4 }
+  template:
+    metadata:
+      labels: { app: mc, fault: f4 }
+    spec:
+      containers:
+        - name: app
+          image: IMAGE
+          env:
+            - { name: APP_VERSION, value: "mc-f4" }
+            - { name: LATENCY_JITTER_MS, value: "1500" }
+          ports:
+            - { name: http, containerPort: 8080 }
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 128Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mc-f4
+  namespace: metric-check
+spec:
+  selector: { app: mc, fault: f4 }
+  ports:
+    - { name: http, port: 80, targetPort: http }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mc-f5
+  namespace: metric-check
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mc, fault: f5 }
+  template:
+    metadata:
+      labels: { app: mc, fault: f5 }
+    spec:
+      containers:
+        - name: app
+          image: IMAGE
+          env:
+            - { name: APP_VERSION, value: "mc-f5" }
+            - { name: LEAK_MB_PER_MIN, value: "20" }
+          ports:
+            - { name: http, containerPort: 8080 }
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 5
+          resources:
+          # 256Mi: the leak (20 MiB/min) must not be OOMKilled within the window.
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 256Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mc-f5
+  namespace: metric-check
+spec:
+  selector: { app: mc, fault: f5 }
+  ports:
+    - { name: http, port: 80, targetPort: http }
+---
+# One request loop per fault, each logging: unix time, fault, HTTP code, client
+# time in s, and the delay the app says it injected (delay_ms in the body).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+  namespace: metric-check
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: client }
+  template:
+    metadata:
+      labels: { app: client }
+      annotations:
+        # Start curl only once the sidecar is up, or the first requests fail.
+        proxy.istio.io/config: '{ "holdApplicationUntilProxyStarts": true }'
+    spec:
+      containers:
+        - name: curl
+          image: curlimages/curl:8.22.0
+          command: [/bin/sh, -c]
+          args:
+            - |
+              for f in f0 f1 f2 f3 f4 f5; do
+                ( while true; do
+                    r=$(curl -s -o /tmp/body.$f -w '%{http_code} %{time_total}' --max-time 5 http://mc-$f/api/work)
+                    d=$(sed -n 's/.*"delay_ms": *\([0-9]*\).*/\1/p' /tmp/body.$f)
+                    echo "$(date +%s) $f $r ${d:-NA}"
+                    sleep 0.5
+                  done ) &
+              done
+              wait
+          resources:
+            requests: { cpu: 10m, memory: 16Mi }
+            limits: { memory: 64Mi }

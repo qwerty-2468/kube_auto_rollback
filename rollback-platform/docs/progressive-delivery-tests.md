@@ -188,6 +188,12 @@ newTag changed in Git
 
 ## Images
 
+> **Superseded (2026-11-08).** Faults are no longer baked into images. Every release runs
+> the same healthy image, and a fault is a set of env vars in
+> `gitops/apps/<app>/base/release.yaml` (see `tools/trial-runner/matrix.toml`). To run a
+> test below by hand, edit that file instead of `newTag`. The table is kept as the record
+> of how these tests were run.
+
 | Tag | Faults | Available |
 |---|---|---|
 | `v2-fbb734b-3`, `v3-b355053-4`, `v4-2f61766-5` | none (healthy) | yes |

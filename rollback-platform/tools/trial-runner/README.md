@@ -8,14 +8,22 @@ library only. It runs on the Mac and needs NetBird up, the `k3s-dev` kube contex
 **Status:** done. The full matrix (72 runs) ran on 2026-11-01, 13:15–17:35, and every
 row was re-measured afterwards with the measurement fixes listed under Validation.
 
+**Faults are env vars (since 2026-11-08).** Every release runs the same healthy image; a
+fault is a set of env vars in `gitops/apps/<app>/base/release.yaml`, listed in
+`matrix.toml` under `[reset]` and `[faults]`. Changing them changes the Rollout's pod
+template, which starts a rollout just as a new image does. The 2026-11-01 matrix still
+ran with one image per fault (git tag `pre-env-faults`, the tags are in its
+`matrix.toml`); `image_tag` in the CSV is the image that ran.
+
 ## Usage
 
 ```sh
 cd tools/trial-runner
 ./run.py show                          # parsed matrix.toml
 ./run.py snapshot --app demo           # what the observer sees right now
-./run.py observe --app demo-bg --strategy bg --fault f1 --tag v5-3e32cfe-6 --rep 1
-#   ... then trigger the release (newTag commit + push + refresh) in another terminal
+./run.py trial --strategy s1 --fault f1 --rep 2   # one cell: trigger, watch, measure, reset
+./run.py observe --app demo-bg --strategy bg --fault f1 --rep 1
+#   ... then trigger the release (release.yaml commit + push + refresh) in another terminal
 ./run.py measure results/timelines/<run-id>.json   # measure again (within 24 h)
 ```
 
@@ -34,7 +42,8 @@ Prometheus keeps 24 hours, so a lost run can't be measured again.
 
 | Module | Job |
 |---|---|
-| `trial/config.py` | reads `matrix.toml`: cluster, apps, fault → image tag, cells |
+| `trial/config.py` | reads `matrix.toml`: cluster, apps, reset and fault env vars, cells |
+| `trial/gitops.py` | the only way the runner changes the cluster: rewrite `release.yaml` or the strategy component, commit, push, refresh Argo CD |
 | `trial/kube.py` | one `kubectl get rollout,analysisrun,experiment,virtualservice,service,pod -o json` per poll (~0.3 s) |
 | `trial/prom.py` | Prometheus instant queries; trusts `docs/ca/dev-root-ca.crt` explicitly, because Python doesn't use the macOS keychain |
 | `trial/observe.py` | turns each poll into a small **snapshot** and keeps it only when it changed, giving a **timeline** |

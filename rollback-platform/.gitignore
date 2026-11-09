@@ -3,3 +3,4 @@
 *.decrypted.*
 __pycache__/
 /tools/trial-runner/results/
+/tools/metric-check/results/

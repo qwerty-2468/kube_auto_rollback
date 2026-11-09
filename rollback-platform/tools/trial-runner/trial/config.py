@@ -13,8 +13,7 @@ class App:
     kind: str  # "canary" or "bluegreen"
     namespace: str
     rollout: str
-    reset_tag: str
-    kustomization: Path
+    release: Path  # the env patch that defines the release
     virtual_service: str | None = None
     active_service: str | None = None
 
@@ -27,12 +26,16 @@ class Config:
     poll_seconds: float
     timeout_minutes: float
     apps: dict[str, App]
-    faults: dict[str, str]
+    reset: dict[str, str]  # env of the healthy release between trials
+    faults: dict[str, dict[str, str]]  # fault -> env values that differ from reset
     cells: list[dict]
     timeouts: dict[str, float]  # fault -> minutes, overriding timeout_minutes
 
     def app_for(self, strategy: str) -> App:
         return self.apps["demo-bg" if strategy == "bg" else "demo"]
+
+    def release_env(self, fault: str) -> dict[str, str]:
+        return self.reset | self.faults[fault]
 
 
 def load(path: Path) -> Config:
@@ -45,8 +48,7 @@ def load(path: Path) -> Config:
             kind=a["kind"],
             namespace=a["namespace"],
             rollout=a["rollout"],
-            reset_tag=a["reset_tag"],
-            kustomization=REPO_ROOT / a["kustomization"],
+            release=REPO_ROOT / a["release"],
             virtual_service=a.get("virtual_service"),
             active_service=a.get("active_service"),
         )
@@ -57,7 +59,8 @@ def load(path: Path) -> Config:
         poll_seconds=float(c.get("poll_seconds", 2)),
         timeout_minutes=float(c.get("timeout_minutes", 20)),
         apps=apps,
-        faults=raw.get("faults", {}),
+        reset={k: str(v) for k, v in raw["reset"].items()},
+        faults={f: {k: str(v) for k, v in env.items()} for f, env in raw.get("faults", {}).items()},
         cells=raw.get("cells", []),
         timeouts={k: float(v) for k, v in raw.get("timeouts", {}).items()},
     )

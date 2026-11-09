@@ -1,0 +1,15 @@
+# The release under test: the app's fault settings, as env vars of the pod
+# template. Every image is the same healthy build; a fault is a change here.
+# Any change to this list changes the pod template, so it starts a rollout just
+# like a new image would. APP_VERSION names the release (it must change, or a
+# healthy release changes nothing). The trial runner rewrites this file.
+- op: add
+  path: /spec/template/spec/containers/0/env
+  value:
+    - { name: APP_VERSION, value: "reset" }
+    - { name: ERROR_RATE, value: "0" }
+    - { name: LATENCY_MS, value: "0" }
+    - { name: LATENCY_JITTER_MS, value: "0" }
+    - { name: FAIL_READINESS, value: "false" }
+    - { name: LEAK_MB_PER_MIN, value: "0" }
+    - { name: WRONG_ANSWER, value: "false" }

@@ -72,8 +72,16 @@ def _pod(p: dict) -> dict:
 def snapshot(objs: dict[str, list[dict]], app: App) -> dict:
     st = _named(objs, "Rollout", app.rollout).get("status", {})
     current = st.get("currentPodHash")
-    # Runs and experiments of the new version only; their names start with <rollout>-<hash>-.
-    prefix = f"{app.rollout}-{current}-"
+    # Runs and experiments of the new version only: <rollout>-<hash>-<revision>[-...].
+    # The revision matters when a pod template is released again (same hash):
+    # the earlier release's runs may still exist.
+    rev = ((_named(objs, "Rollout", app.rollout).get("metadata") or {}).get("annotations") or {}).get(
+        "rollout.argoproj.io/revision")
+    base = f"{app.rollout}-{current}-{rev}"
+
+    def ours(name: str) -> bool:
+        return name == base or name.startswith(base + "-")
+
     snap = {
         "rollout": {
             "phase": st.get("phase"),
@@ -84,9 +92,9 @@ def snapshot(objs: dict[str, list[dict]], app: App) -> dict:
             "stable_hash": st.get("stableRS"),
         },
         "analysis": {a["metadata"]["name"]: _analysis(a) for a in objs.get("AnalysisRun", [])
-                     if a["metadata"]["name"].startswith(prefix)},
+                     if ours(a["metadata"]["name"])},
         "experiments": {e["metadata"]["name"]: e.get("status", {}).get("phase")
-                        for e in objs.get("Experiment", []) if e["metadata"]["name"].startswith(prefix)},
+                        for e in objs.get("Experiment", []) if ours(e["metadata"]["name"])},
         # The app's pods, including experiment pods (they copy the app label).
         "pods": {p["metadata"]["name"]: _pod(p) for p in objs.get("Pod", [])
                  if (p["metadata"].get("labels") or {}).get("app") == app.rollout},

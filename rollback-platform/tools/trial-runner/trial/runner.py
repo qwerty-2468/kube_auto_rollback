@@ -2,7 +2,7 @@
 
 A trial: check the starting state, switch strategy if needed, trigger the
 release through Git while the observer watches, measure, reset to the healthy
-tag, save. Every step that changes something is a commit.
+release, save. Every step that changes something is a commit.
 """
 
 import subprocess
@@ -24,32 +24,41 @@ def _rollout(cfg: Config, app: App) -> dict:
     return observe.snapshot(kube.get_all(cfg.context, app.namespace), app)["rollout"]
 
 
-def _image_tag(cfg: Config, app: App) -> str:
+def _live(cfg: Config, app: App, jsonpath: str) -> str:
     out = subprocess.run(["kubectl", "--context", cfg.context, "-n", app.namespace, "get", "rollout",
-                          app.rollout, "-o", "jsonpath={.spec.template.spec.containers[0].image}"],
+                          app.rollout, "-o", f"jsonpath={{.spec.template.spec.containers[0].{jsonpath}}}"],
                          capture_output=True, text=True)
-    return out.stdout.rsplit(":", 1)[-1]
+    return out.stdout.strip()
+
+
+def _image_tag(cfg: Config, app: App) -> str:
+    return _live(cfg, app, "image").rsplit(":", 1)[-1]
+
+
+def _release(cfg: Config, app: App) -> str:
+    """The APP_VERSION of the release the cluster runs."""
+    return _live(cfg, app, 'env[?(@.name=="APP_VERSION")].value')
 
 
 def _settled(r: dict) -> bool:
     return r["phase"] in ("Healthy", "Degraded")
 
 
-def _wait_healthy_on(cfg: Config, app: App, tag: str, timeout_s: float, log) -> None:
+def _wait_healthy_on(cfg: Config, app: App, release: str, timeout_s: float, log) -> None:
     deadline = time.time() + timeout_s
     while time.time() < deadline:
         r = _rollout(cfg, app)
-        if r["phase"] == "Healthy" and r["current_hash"] == r["stable_hash"] and _image_tag(cfg, app) == tag:
+        if r["phase"] == "Healthy" and r["current_hash"] == r["stable_hash"] and _release(cfg, app) == release:
             return
         time.sleep(cfg.poll_seconds * 2)
-    raise TrialError(f"{app.name} not Healthy on {tag} after {timeout_s:.0f}s")
+    raise TrialError(f"{app.name} not Healthy on {release} after {timeout_s:.0f}s")
 
 
 def reset(cfg: Config, app: App, log) -> None:
-    """Back to the healthy reset tag.
+    """Back to the healthy reset release.
 
     After an abort this is instant: Git points at the stable version again.
-    After a promotion the bad image is stable, so the reset is a new release.
+    After a promotion the bad release is stable, so the reset is a new release.
     It isn't measured, so on demo it runs under S0 (100% at once, seconds
     instead of up to 7.5 min); the next trial switches its strategy back.
     """
@@ -59,16 +68,17 @@ def reset(cfg: Config, app: App, log) -> None:
         subprocess.run(["kubectl", "argo", "rollouts", "--context", cfg.context, "-n", app.namespace,
                         "abort", app.rollout], capture_output=True, text=True)
         r = _rollout(cfg, app)
-    promoted_bad = r["current_hash"] == r["stable_hash"] and _image_tag(cfg, app) != app.reset_tag
-    files = [app.kustomization]
+    name = cfg.reset["APP_VERSION"]
+    promoted_bad = r["current_hash"] == r["stable_hash"] and _release(cfg, app) != name
+    files = [app.release]
     if promoted_bad and app.name == "demo" and gitops.set_strategy("s0"):
         files.append(gitops.DEV_OVERLAY)
-    if gitops.set_tag(app, app.reset_tag) or len(files) > 1:
+    if gitops.set_release(app, cfg.reset) or len(files) > 1:
         how = "via s0" if len(files) > 1 else "back to stable"
-        commit = gitops.commit_push(files, f"trial reset: {app.name} to {app.reset_tag} ({how})")
+        commit = gitops.commit_push(files, f"trial reset: {app.name} to {name} ({how})")
         gitops.refresh(cfg.context, app.name)
         log(f"reset commit {commit} ({how})")
-    _wait_healthy_on(cfg, app, app.reset_tag, cfg.timeout_minutes * 60, log)
+    _wait_healthy_on(cfg, app, name, cfg.timeout_minutes * 60, log)
 
 
 def _preconditions(cfg: Config, app: App, log) -> None:
@@ -77,8 +87,8 @@ def _preconditions(cfg: Config, app: App, log) -> None:
             raise TrialError(f"{other.name} is still releasing")
     r = _rollout(cfg, app)
     if not (r["phase"] == "Healthy" and r["current_hash"] == r["stable_hash"]
-            and _image_tag(cfg, app) == app.reset_tag):
-        log(f"{app.name} isn't Healthy on the reset tag ({r['phase']}, {_image_tag(cfg, app)}): resetting")
+            and _release(cfg, app) == cfg.reset["APP_VERSION"]):
+        log(f"{app.name} isn't Healthy on the reset release ({r['phase']}, {_release(cfg, app)}): resetting")
         reset(cfg, app, log)
 
 
@@ -88,9 +98,10 @@ def run_id(strategy: str, fault: str, rep: int) -> str:
 
 def run_trial(cfg: Config, prom: Prometheus, strategy: str, fault: str, rep: int = 1, log=print) -> dict:
     app = cfg.app_for(strategy)
-    tag = cfg.faults[fault]
+    env = cfg.release_env(fault)
+    name = env["APP_VERSION"]
     rid = run_id(strategy, fault, rep)
-    log(f"=== {rid}: {app.name} @ {tag}")
+    log(f"=== {rid}: {app.name} @ {name}")
     _preconditions(cfg, app, log)
 
     if app.name == "demo" and gitops.set_strategy(strategy):
@@ -102,13 +113,13 @@ def run_trial(cfg: Config, prom: Prometheus, strategy: str, fault: str, rep: int
     trigger = {}
 
     def push_release():
-        gitops.set_tag(app, tag)
-        trigger["commit"] = gitops.commit_push([app.kustomization], f"trial {rid}: {strategy}/{fault} ({tag})")
+        gitops.set_release(app, env)
+        trigger["commit"] = gitops.commit_push([app.release], f"trial {rid}: {strategy}/{fault} ({name})")
         gitops.refresh(cfg.context, app.name)
         log(f"trigger commit {trigger['commit']}")
 
     info = {"started_at": datetime.now().isoformat(timespec="seconds"), "app": app.name,
-            "strategy": strategy, "fault": fault, "image_tag": tag, "rep": rep, "notes": ""}
+            "strategy": strategy, "fault": fault, "image_tag": _image_tag(cfg, app), "rep": rep, "notes": ""}
     tl = observe.watch(cfg, app, prom, label=rid, start_timeout_s=300,
                        timeout_minutes=cfg.timeouts.get(fault), on_first_poll=push_release,
                        log=lambda s: log("   " + s))

@@ -38,7 +38,7 @@ def _replace(path: Path, pattern: str, repl: str) -> bool:
 
 
 def component_dir(strategy: str) -> str:
-    """s4 -> s4-mirror-canary"""
+    """s4 -> s4-mirror-canary, s3w10 -> s3w10-experiment"""
     found = [d.name for d in COMPONENTS.iterdir() if d.name.startswith(f"{strategy}-")]
     if len(found) != 1:
         raise GitError(f"no single component for {strategy}: {found}")
@@ -46,15 +46,16 @@ def component_dir(strategy: str) -> str:
 
 
 def set_strategy(strategy: str) -> bool:
-    return _replace(DEV_OVERLAY, r"(\.\./\.\./components/)s\d-[a-z-]+", rf"\g<1>{component_dir(strategy)}")
+    return _replace(DEV_OVERLAY, r"(\.\./\.\./components/)s\d[a-z0-9]*-[a-z0-9-]+", rf"\g<1>{component_dir(strategy)}")
 
 
-def set_tag(app: App, tag: str) -> bool:
-    return _replace(app.kustomization, r"^(\s*newTag:).*$", rf"\g<1> {tag}")
-
-
-def current_tag(app: App) -> str:
-    return re.search(r"^\s*newTag:\s*(\S+)", app.kustomization.read_text(), re.M).group(1)
+def set_release(app: App, env: dict[str, str]) -> bool:
+    """Rewrites the env list in the app's release.yaml, keeping its comments; True if it changed."""
+    old = app.release.read_text()
+    head = old[:old.index("    - { name:")]
+    new = head + "".join(f'    - {{ name: {k}, value: "{v}" }}\n' for k, v in env.items())
+    app.release.write_text(new)
+    return new != old
 
 
 def commit_push(paths: list[Path], message: str) -> str:
