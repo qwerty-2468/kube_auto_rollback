@@ -11,8 +11,7 @@ from pathlib import Path
 
 from .config import REPO_ROOT, App
 
-DEV_OVERLAY = REPO_ROOT / "gitops/apps/demo/overlays/dev/kustomization.yaml"
-COMPONENTS = REPO_ROOT / "gitops/apps/demo/components"
+APPS = REPO_ROOT / "gitops/apps"
 TRAILER = "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 
@@ -37,16 +36,22 @@ def _replace(path: Path, pattern: str, repl: str) -> bool:
     return new != old
 
 
-def component_dir(strategy: str) -> str:
-    """s4 -> s4-mirror-canary, s3w10 -> s3w10-experiment"""
-    found = [d.name for d in COMPONENTS.iterdir() if d.name.startswith(f"{strategy}-")]
+def dev_overlay(app: App) -> Path:
+    """The overlay that names the app's strategy under test (one components line)."""
+    return APPS / app.name / "overlays/dev/kustomization.yaml"
+
+
+def component_dir(app: App, strategy: str) -> str:
+    """s4 -> s4-mirror-canary, b2 -> b2-pre"""
+    found = [d.name for d in (APPS / app.name / "components").iterdir() if d.name.startswith(f"{strategy}-")]
     if len(found) != 1:
-        raise GitError(f"no single component for {strategy}: {found}")
+        raise GitError(f"no single component for {strategy} in {app.name}: {found}")
     return found[0]
 
 
-def set_strategy(strategy: str) -> bool:
-    return _replace(DEV_OVERLAY, r"(\.\./\.\./components/)s\d[a-z0-9]*-[a-z0-9-]+", rf"\g<1>{component_dir(strategy)}")
+def set_strategy(app: App, strategy: str) -> bool:
+    return _replace(dev_overlay(app), r"(\.\./\.\./components/)[sb]\d[a-z0-9]*-[a-z0-9-]+",
+                    rf"\g<1>{component_dir(app, strategy)}")
 
 
 def set_release(app: App, env: dict[str, str]) -> bool:

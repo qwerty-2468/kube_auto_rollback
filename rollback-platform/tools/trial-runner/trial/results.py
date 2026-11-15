@@ -11,7 +11,7 @@ COLUMNS = [
     "outcome", "caught_by", "ttd_s", "detect_from_start_s", "ttr_s",
     "max_exposure_pct", "user_exposed_s",
     "user_requests", "user_5xx", "user_slow",
-    "mirrored_requests", "mirrored_5xx", "smoke_requests", "smoke_5xx",
+    "mirrored_requests", "mirrored_5xx", "load_requests", "load_5xx", "smoke_requests", "smoke_5xx",
     "release_duration_s", "trial_pod_minutes", "notes",
 ]
 
@@ -29,6 +29,8 @@ def save(run_id: str, info: dict, timeline: dict, m: dict) -> Path:
         "user_slow": m.get("user", {}).get("slow"),
         "mirrored_requests": m.get("mirrored", {}).get("total"),
         "mirrored_5xx": m.get("mirrored", {}).get("5xx"),
+        "load_requests": m.get("load", {}).get("total"),
+        "load_5xx": m.get("load", {}).get("5xx"),
         "smoke_requests": m.get("smoke", {}).get("total"),
         "smoke_5xx": m.get("smoke", {}).get("5xx"),
     }

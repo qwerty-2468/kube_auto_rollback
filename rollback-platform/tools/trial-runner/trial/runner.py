@@ -14,6 +14,8 @@ from .config import App, Config
 from .prom import Prometheus
 
 SETTLE_S = 60  # between trials, so one run's 1m rate windows don't reach into the next
+FAST = {"demo": "s0", "demo-bg": "b0"}  # no analysis: a reset that is a new release takes seconds
+DEFAULT = {"demo": "s4", "demo-bg": "b3"}  # the base configuration, left on after the matrix
 
 
 class TrialError(RuntimeError):
@@ -59,8 +61,8 @@ def reset(cfg: Config, app: App, log) -> None:
 
     After an abort this is instant: Git points at the stable version again.
     After a promotion the bad release is stable, so the reset is a new release.
-    It isn't measured, so on demo it runs under S0 (100% at once, seconds
-    instead of up to 7.5 min); the next trial switches its strategy back.
+    It isn't measured, so it runs without any analysis (S0 or B0: seconds
+    instead of minutes); the next trial switches its strategy back.
     """
     r = _rollout(cfg, app)
     if r["phase"] == "Progressing":  # a release that never ended (e.g. F6): stop it first
@@ -71,10 +73,10 @@ def reset(cfg: Config, app: App, log) -> None:
     name = cfg.reset["APP_VERSION"]
     promoted_bad = r["current_hash"] == r["stable_hash"] and _release(cfg, app) != name
     files = [app.release]
-    if promoted_bad and app.name == "demo" and gitops.set_strategy("s0"):
-        files.append(gitops.DEV_OVERLAY)
+    if promoted_bad and gitops.set_strategy(app, FAST[app.name]):
+        files.append(gitops.dev_overlay(app))
     if gitops.set_release(app, cfg.reset) or len(files) > 1:
-        how = "via s0" if len(files) > 1 else "back to stable"
+        how = f"via {FAST[app.name]}" if len(files) > 1 else "back to stable"
         commit = gitops.commit_push(files, f"trial reset: {app.name} to {name} ({how})")
         gitops.refresh(cfg.context, app.name)
         log(f"reset commit {commit} ({how})")
@@ -104,8 +106,9 @@ def run_trial(cfg: Config, prom: Prometheus, strategy: str, fault: str, rep: int
     log(f"=== {rid}: {app.name} @ {name}")
     _preconditions(cfg, app, log)
 
-    if app.name == "demo" and gitops.set_strategy(strategy):
-        commit = gitops.commit_push([gitops.DEV_OVERLAY], f"trial: strategy {gitops.component_dir(strategy)}")
+    if gitops.set_strategy(app, strategy):
+        commit = gitops.commit_push([gitops.dev_overlay(app)],
+                                    f"trial: {app.name} strategy {gitops.component_dir(app, strategy)}")
         gitops.refresh(cfg.context, app.name)
         gitops.wait_synced(cfg.context, app.name, commit)
         log(f"strategy {strategy} active ({commit})")
@@ -128,6 +131,9 @@ def run_trial(cfg: Config, prom: Prometheus, strategy: str, fault: str, rep: int
         raise TrialError(f"{rid}: the release didn't start within 5 min")
     if tl["outcome"] == "timeout":
         info["notes"] = "did not end by itself; aborted by the runner"
+    # The user window reaches SCRAPE_LAG_S past the end (a promoted release
+    # ends right after the switch), so wait until Prometheus has those samples.
+    time.sleep(max(0.0, tl["t_end"] + measure.SCRAPE_LAG_S + 5 - time.time()))
     m = measure.measure(tl, prom)
     results.save(rid, info, tl, m)
     log(f"--- {rid}: {m['outcome']}, caught by {m.get('caught_by')}, ttd {m.get('ttd_s')} s, "
@@ -147,9 +153,11 @@ def run_matrix(cfg: Config, prom: Prometheus, log=print) -> None:
     for i, (s, f, rep) in enumerate(todo, 1):
         log(f"[{i}/{len(todo)}]")
         run_trial(cfg, prom, s, f, rep, log)
-    # Leave dev on the full setup, as it was before the matrix.
-    if gitops.set_strategy("s7"):
-        commit = gitops.commit_push([gitops.DEV_OVERLAY], "trial: matrix done, strategy s7-all")
-        gitops.refresh(cfg.context, "demo")
-        log(f"dev back on s7 ({commit})")
+    # Leave dev on the base configuration.
+    for app in cfg.apps.values():
+        if gitops.set_strategy(app, DEFAULT[app.name]):
+            commit = gitops.commit_push([gitops.dev_overlay(app)],
+                                        f"trial: matrix done, {app.name} back on {DEFAULT[app.name]}")
+            gitops.refresh(cfg.context, app.name)
+            log(f"{app.name} back on {DEFAULT[app.name]} ({commit})")
     log("matrix done")

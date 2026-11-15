@@ -1,9 +1,9 @@
 resources:
   - ../../base
-# The strategy under test: exactly one of s0-none ... s7-all
+# The strategy under test: exactly one of s0-none ... s4-mirror-canary
 # (docs/thesis-test-plan.md, section 7). The trial runner edits this line.
 components:
-  - ../../components/s7-all
+  - ../../components/s4-mirror-canary
 patches:
   - target: {kind: VirtualService, name: demo}
     patch: |-

@@ -1,0 +1,9 @@
+# B2: pre-promotion analysis alone. preview-load judges the new version on the
+# Job's traffic before any user sees it; once it passes, the switch is final.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches:
+  - target: {kind: Rollout, name: demo-bg}
+    patch: |-
+      - op: remove
+        path: /spec/strategy/blueGreen/postPromotionAnalysis

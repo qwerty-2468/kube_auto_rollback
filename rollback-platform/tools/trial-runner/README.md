@@ -5,8 +5,18 @@ Measures rollouts for the strategy × fault matrix in
 library only. It runs on the Mac and needs NetBird up, the `k3s-dev` kube context and
 `https://prometheus.dev.internal`.
 
-**Status:** done. The full matrix (72 runs) ran on 2026-11-01, 13:15–17:35, and every
-row was re-measured afterwards with the measurement fixes listed under Validation.
+**Status:** second matrix (2026-11-09). The first one (s0–s7 × F0–F8 and blue-green
+with the smoke test, 72 runs on 2026-11-01, plus the s3w10 cells) is archived in
+`results/v1/` (git tag `pre-matrix-v2`). The second one tests each mechanism on its own
+plus one combination per app, 63 cells (see `matrix.toml`):
+
+| App | Strategy | Mechanisms |
+|---|---|---|
+| demo | s0 / s1 / s2 / s3 / s4 | none / canary / mirroring / experiment at 10% / mirroring + canary (base) |
+| demo-bg | b0 / b1 / b2 / b3 | none / post-promotion / pre-promotion on a load Job / both (base) |
+
+The strategy is the `components:` line of each app's dev overlay
+(`gitops/apps/<app>/components/<strategy>-*`); the runner switches it per trial.
 
 **Faults are env vars (since 2026-11-08).** Every release runs the same healthy image; a
 fault is a set of env vars in `gitops/apps/<app>/base/release.yaml`, listed in
@@ -22,7 +32,7 @@ cd tools/trial-runner
 ./run.py show                          # parsed matrix.toml
 ./run.py snapshot --app demo           # what the observer sees right now
 ./run.py trial --strategy s1 --fault f1 --rep 2   # one cell: trigger, watch, measure, reset
-./run.py observe --app demo-bg --strategy bg --fault f1 --rep 1
+./run.py observe --app demo-bg --strategy b2 --fault f1 --rep 1
 #   ... then trigger the release (release.yaml commit + push + refresh) in another terminal
 ./run.py measure results/timelines/<run-id>.json   # measure again (within 24 h)
 ```
@@ -70,7 +80,7 @@ Prometheus keeps 24 hours, so a lost run can't be measured again.
 | `ttr_s` | from detection until no users and no mirror reach the new version |
 | `max_exposure_pct`, `user_exposed_s` | peak share of users on the new version (100% once it is promoted, since the stable Service then points at it), and for how long any were before the release ended |
 | `user_*` | requests the gateway sent to the new version, read from the new pods' sidecar by their hash (so canary weight and the stable Service after promotion both count), plus the experiment's canary pods through `demo-exp-canary`. Window: from first exposure (after mirroring ended) until recovery, or for promoted runs until 30 s after promotion; a promoted fault then stays with every user until someone acts |
-| `mirrored_*`, `smoke_*` | copies received by the new pods during mirroring; the smoke Job's requests |
+| `mirrored_*`, `load_*`, `smoke_*` | copies received by the new pods during mirroring; the requests of the pre-promotion load Job (preview-load) or smoke Job |
 | `*_slow` | over **500 ms**: Istio's buckets jump from 250 to 500, so there is no exact 300 ms boundary |
 | `release_duration_s` | promoted runs: start → promoted |
 | `trial_pod_minutes` | lifetime of pods created during the trial, until the trial ended (a snapshot holds until the next one, so a pod alive at the end counts until `t_end`) |

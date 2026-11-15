@@ -112,7 +112,7 @@ def main():
     o.add_argument("--start-timeout", type=float, default=600,
                    help="seconds to wait for the release to start (default 600)")
     t = sub.add_parser("trial", help="one cell: trigger through Git, watch, measure, reset")
-    t.add_argument("--strategy", required=True, help="s0..s7 or bg")
+    t.add_argument("--strategy", required=True, help="s0..s4 (demo) or b0..b3 (demo-bg)")
     t.add_argument("--fault", required=True, help="f0..f8")
     t.add_argument("--rep", type=int, default=1)
     sub.add_parser("matrix", help="every cell in matrix.toml not yet in results/trials.csv")

@@ -32,7 +32,8 @@ class Config:
     timeouts: dict[str, float]  # fault -> minutes, overriding timeout_minutes
 
     def app_for(self, strategy: str) -> App:
-        return self.apps["demo-bg" if strategy == "bg" else "demo"]
+        """s0..s4 run on the canary app, b0..b3 on the blue-green one."""
+        return self.apps["demo-bg" if strategy.startswith("b") else "demo"]
 
     def release_env(self, fault: str) -> dict[str, str]:
         return self.reset | self.faults[fault]

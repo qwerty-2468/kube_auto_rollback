@@ -1,4 +1,6 @@
-# S3: experiment alone, then straight to 100%.
+# S3: experiment alone, then straight to 100%. Each template gets 10% of the
+# traffic, the same share as the canary's first step (setWeight 10), so the
+# experiment never shows the new version to more users than S1 does.
 # Strategies and hypotheses: docs/thesis-test-plan.md, sections 2 and 4.
 apiVersion: kustomize.config.k8s.io/v1alpha1
 kind: Component
@@ -12,11 +14,11 @@ patches:
       - op: replace
         path: /spec/strategy/canary/steps
         value:
-          # E: canary vs a fresh baseline of stable, 20% of the traffic each
+          # E: canary vs a fresh baseline of stable, 10% of the traffic each
           - experiment:
               duration: 3m
               templates:
-                - {name: baseline, specRef: stable, replicas: 1, weight: 20, service: {name: demo-exp-baseline}}
-                - {name: canary, specRef: canary, replicas: 1, weight: 20, service: {name: demo-exp-canary}}
+                - {name: baseline, specRef: stable, replicas: 1, weight: 10, service: {name: demo-exp-baseline}}
+                - {name: canary, specRef: canary, replicas: 1, weight: 10, service: {name: demo-exp-canary}}
               analyses:
                 - {name: compare, templateName: canary-vs-baseline}

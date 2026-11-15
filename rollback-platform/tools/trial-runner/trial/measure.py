@@ -124,7 +124,7 @@ def _requests(prom: Prometheus, selector: str, t0: float, t1: float) -> dict:
 
 
 def _traffic(tl: dict, t: dict, prom: Prometheus) -> dict:
-    """Request counts from Prometheus: users on the new version, mirrored copies, smoke Job."""
+    """Request counts from Prometheus: users on the new version, mirrored copies, Job requests."""
     ns, bad = tl["namespace"], tl["bad_hash"]
     out = {"user": {"total": 0, "5xx": 0, "slow": 0}}
     if t["exposed"]:
@@ -148,10 +148,15 @@ def _traffic(tl: dict, t: dict, prom: Prometheus) -> dict:
         # The gateway doesn't report mirrored copies; the new pods' own sidecar does.
         sel = f'reporter="destination", namespace="{ns}", rollouts_pod_template_hash="{bad}"'
         out["mirrored"] = _requests(prom, sel, t["mirror_on"], (t["mirror_off"] or t["end"]) + SCRAPE_LAG_S)
-    if tl["kind"] == "bluegreen":
-        sel = (f'reporter="destination", namespace="{ns}", rollouts_pod_template_hash="{bad}", '
-               'source_workload=~".*smoke-test.*"')
-        out["smoke"] = _requests(prom, sel, t["start"], (t["exposed"] or t["end"]) + SCRAPE_LAG_S)
+    if tl["kind"] == "bluegreen" and t["pre"]:
+        # Before the switch only the pre-promotion Job calls the new version:
+        # preview-load (load for the metrics) or smoke-test (checks the answers).
+        for key, job in (("load", "preview-load"), ("smoke", "smoke-test")):
+            sel = (f'reporter="destination", namespace="{ns}", rollouts_pod_template_hash="{bad}", '
+                   f'source_workload=~".*{job}.*"')
+            n = _requests(prom, sel, t["start"], (t["exposed"] or t["end"]) + SCRAPE_LAG_S)
+            if n["total"]:
+                out[key] = n
     return out
 
 

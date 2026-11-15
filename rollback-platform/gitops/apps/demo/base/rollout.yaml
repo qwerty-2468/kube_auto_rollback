@@ -47,7 +47,7 @@ spec:
       analysis:
         templates:
           - templateName: canary-health
-        startingStep: 7
+        startingStep: 6 # the pause after setWeight 10, as in S1
         args:
           # The canary's pod-template-hash, so the memory query can pick its pods.
           - name: canary-hash
@@ -73,24 +73,6 @@ spec:
             name: mirror-api
         - setCanaryScale: # back to scaling the canary with its traffic weight
             matchTrafficWeight: true
-        # Canary against a fresh baseline of stable, side by side on 20% of the
-        # traffic each; canary-vs-baseline fails it if the canary is worse.
-        - experiment:
-            duration: 3m
-            templates:
-              - name: baseline
-                specRef: stable
-                replicas: 1
-                weight: 20
-                service: { name: demo-exp-baseline }
-              - name: canary
-                specRef: canary
-                replicas: 1
-                weight: 20
-                service: { name: demo-exp-canary }
-            analyses:
-              - name: compare
-                templateName: canary-vs-baseline
         - setWeight: 10
         - pause: { duration: 1m }
         - setWeight: 50

@@ -1,0 +1,79 @@
+# Pre-promotion analysis: no user reaches the preview Service before the switch,
+# and blue-green has no traffic routing to mirror requests to it, so a Job
+# creates the traffic. The Job only generates load, the same request at the same
+# pace as the user load generator (one GET /api/work, then 0.2 s pause), and
+# never fails on a bad answer; the Prometheus metrics, with the same checks and
+# timing as the canary's mirror-health, decide. All metrics of a run run in
+# parallel, so the load is flowing when the first measurement is taken.
+# The Job runs inside the mesh (STRICT mTLS); istio-proxy is a native sidecar
+# and stops when the load loop exits, which lets the Job complete.
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: preview-load
+  namespace: demo-bg
+spec:
+  args:
+    - name: new-hash
+  metrics:
+    - name: preview-load
+      provider:
+        job:
+          spec:
+            backoffLimit: 0
+            activeDeadlineSeconds: 90
+            template:
+              spec:
+                restartPolicy: Never
+                containers:
+                  - name: load
+                    image: curlimages/curl:8.22.0
+                    command: [/bin/sh, -c]
+                    args:
+                      - |
+                        # 60 s of load: the last measurement (30 s + 2 x 20 s) still has
+                        # a minute of it in its window, and the run ends soon after.
+                        # Blue-green counts the pre-promotion analysis against
+                        # progressDeadlineSeconds (120 s from the release's start), so
+                        # a longer Job aborted a healthy release.
+                        end=$(( $(date +%s) + 60 )); n=0
+                        while [ "$(date +%s)" -lt "$end" ]; do
+                          curl -s -o /dev/null --max-time 5 http://demo-bg-preview/api/work || true
+                          n=$((n + 1)); sleep 0.2
+                        done
+                        echo "sent $n requests"
+                    resources:
+                      requests: {cpu: 10m, memory: 16Mi}
+                      limits: {memory: 32Mi}
+
+    # The preview pods' own sidecar, picked by their hash: only the Job calls them.
+    - name: preview-success-rate
+      interval: 20s
+      initialDelay: 30s
+      count: 3
+      failureLimit: 0
+      successCondition: len(result) > 0 && result[0] >= 0.95
+      provider:
+        prometheus:
+          address: http://prometheus-server.monitoring.svc.cluster.local
+          query: |
+            (sum(rate(istio_requests_total{reporter="destination",
+              namespace="demo-bg", rollouts_pod_template_hash="{{args.new-hash}}",
+              response_code!~"5.*"}[1m])) or vector(0))
+            /
+            sum(rate(istio_requests_total{reporter="destination",
+              namespace="demo-bg", rollouts_pod_template_hash="{{args.new-hash}}"}[1m]))
+
+    - name: preview-latency-p95
+      interval: 20s
+      initialDelay: 30s
+      count: 3
+      failureLimit: 1
+      successCondition: len(result) > 0 && result[0] <= 300
+      provider:
+        prometheus:
+          address: http://prometheus-server.monitoring.svc.cluster.local
+          query: |
+            histogram_quantile(0.95, sum by (le) (rate(
+              istio_request_duration_milliseconds_bucket{reporter="destination",
+                namespace="demo-bg", rollouts_pod_template_hash="{{args.new-hash}}"}[1m])))

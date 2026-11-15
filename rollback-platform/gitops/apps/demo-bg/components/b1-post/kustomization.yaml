@@ -1,0 +1,10 @@
+# B1: post-promotion analysis alone. The switch happens as soon as the new
+# version is Ready; bg-post-promotion then judges it under all users and
+# switches back if it fails.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches:
+  - target: {kind: Rollout, name: demo-bg}
+    patch: |-
+      - op: remove
+        path: /spec/strategy/blueGreen/prePromotionAnalysis

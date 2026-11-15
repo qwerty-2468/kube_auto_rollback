@@ -1,5 +1,9 @@
 resources:
   - ../../base
+# The strategy under test: exactly one of b0-none ... b3-pre-post. The trial
+# runner edits this line.
+components:
+  - ../../components/b3-pre-post
 patches:
   - target: {kind: VirtualService, name: demo-bg}
     patch: |-

@@ -205,7 +205,8 @@ def watch(cfg: Config, app: App, prom: Prometheus, *, label: str = "",
         if outcome is None and "bad_hash" not in tl and time.time() > start_by:
             outcome = "not-started"
         if outcome is None and time.time() > deadline:
-            outcome = "timeout"
+            # Aborted but still in the grace period after recovery: it's an abort.
+            outcome = "aborted" if "bad_hash" in tl and aborted(snap) else "timeout"
         if outcome:
             break
         time.sleep(cfg.poll_seconds)

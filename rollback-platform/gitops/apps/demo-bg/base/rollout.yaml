@@ -35,13 +35,18 @@ spec:
     blueGreen:
       activeService: demo-bg-active
       previewService: demo-bg-preview
-      # Promote as soon as the smoke test passes; no manual step.
+      # Promote as soon as the pre-promotion analysis passes; no manual step.
       autoPromotionEnabled: true
-      # Before the switch: a Job sends requests to the preview Service.
-      # No user has seen the new version yet, so a failure costs nothing.
+      # Before the switch: a Job sends load to the preview Service and
+      # preview-load judges the new pods' metrics. No user has seen the new
+      # version yet, so a failure costs nothing.
       prePromotionAnalysis:
         templates:
-          - templateName: smoke-test
+          - templateName: preview-load
+        args:
+          - name: new-hash
+            valueFrom:
+              podTemplateHashValue: Latest
       # After the switch: every user is on the new version. A failure switches
       # the active Service back to the old ReplicaSet, which is still running.
       postPromotionAnalysis:

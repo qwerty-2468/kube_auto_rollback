@@ -54,8 +54,15 @@ f8 = { APP_VERSION = "f8-wrong", WRONG_ANSWER = "true" }
 [timeouts]
 f6 = 4
 
-# The matrix (docs/thesis-test-plan.md, section 4): strategies s0-s7 run on demo
-# (components/<strategy>-*), bg on demo-bg; one run per cell, grouped by strategy.
+# The matrix: each mechanism on its own, plus the one combination per app
+# whose parts cover each other's gaps. One run per cell, grouped by strategy.
+#   demo (canary), components/<strategy>-*:
+#     s0 control, s1 canary, s2 mirroring, s3 experiment (10%), s4 mirroring + canary (base)
+#   demo-bg (blue-green), components/<strategy>-*:
+#     b0 control, b1 post-promotion, b2 pre-promotion (load Job), b3 pre + post (base)
+# F8 is left out: only the smoke test can catch it, and it isn't in any strategy now.
+# Results of the first matrix (s0-s7, bg with the smoke test) are in results/v1/.
+
 [[cells]]
 strategy = "s0"
 fault = "f0"
@@ -83,10 +90,6 @@ fault = "f5"
 [[cells]]
 strategy = "s0"
 fault = "f6"
-
-[[cells]]
-strategy = "s0"
-fault = "f8"
 
 [[cells]]
 strategy = "s1"
@@ -117,10 +120,6 @@ strategy = "s1"
 fault = "f6"
 
 [[cells]]
-strategy = "s1"
-fault = "f8"
-
-[[cells]]
 strategy = "s2"
 fault = "f0"
 
@@ -147,10 +146,6 @@ fault = "f5"
 [[cells]]
 strategy = "s2"
 fault = "f6"
-
-[[cells]]
-strategy = "s2"
-fault = "f8"
 
 [[cells]]
 strategy = "s3"
@@ -181,10 +176,6 @@ strategy = "s3"
 fault = "f6"
 
 [[cells]]
-strategy = "s3"
-fault = "f8"
-
-[[cells]]
 strategy = "s4"
 fault = "f0"
 
@@ -213,157 +204,113 @@ strategy = "s4"
 fault = "f6"
 
 [[cells]]
-strategy = "s4"
-fault = "f8"
-
-[[cells]]
-strategy = "s5"
+strategy = "b0"
 fault = "f0"
 
 [[cells]]
-strategy = "s5"
+strategy = "b0"
 fault = "f1"
 
 [[cells]]
-strategy = "s5"
+strategy = "b0"
 fault = "f2"
 
 [[cells]]
-strategy = "s5"
+strategy = "b0"
 fault = "f3"
 
 [[cells]]
-strategy = "s5"
+strategy = "b0"
 fault = "f4"
 
 [[cells]]
-strategy = "s5"
+strategy = "b0"
 fault = "f5"
 
 [[cells]]
-strategy = "s5"
+strategy = "b0"
 fault = "f6"
 
 [[cells]]
-strategy = "s5"
-fault = "f8"
-
-[[cells]]
-strategy = "s6"
+strategy = "b1"
 fault = "f0"
 
 [[cells]]
-strategy = "s6"
+strategy = "b1"
 fault = "f1"
 
 [[cells]]
-strategy = "s6"
+strategy = "b1"
 fault = "f2"
 
 [[cells]]
-strategy = "s6"
+strategy = "b1"
 fault = "f3"
 
 [[cells]]
-strategy = "s6"
+strategy = "b1"
 fault = "f4"
 
 [[cells]]
-strategy = "s6"
+strategy = "b1"
 fault = "f5"
 
 [[cells]]
-strategy = "s6"
+strategy = "b1"
 fault = "f6"
 
 [[cells]]
-strategy = "s6"
-fault = "f8"
-
-[[cells]]
-strategy = "s7"
+strategy = "b2"
 fault = "f0"
 
 [[cells]]
-strategy = "s7"
+strategy = "b2"
 fault = "f1"
 
 [[cells]]
-strategy = "s7"
+strategy = "b2"
 fault = "f2"
 
 [[cells]]
-strategy = "s7"
+strategy = "b2"
 fault = "f3"
 
 [[cells]]
-strategy = "s7"
+strategy = "b2"
 fault = "f4"
 
 [[cells]]
-strategy = "s7"
+strategy = "b2"
 fault = "f5"
 
 [[cells]]
-strategy = "s7"
+strategy = "b2"
 fault = "f6"
 
 [[cells]]
-strategy = "s7"
-fault = "f8"
-
-[[cells]]
-strategy = "bg"
+strategy = "b3"
 fault = "f0"
 
 [[cells]]
-strategy = "bg"
+strategy = "b3"
 fault = "f1"
 
 [[cells]]
-strategy = "bg"
+strategy = "b3"
 fault = "f2"
 
 [[cells]]
-strategy = "bg"
+strategy = "b3"
 fault = "f3"
 
 [[cells]]
-strategy = "bg"
+strategy = "b3"
 fault = "f4"
 
 [[cells]]
-strategy = "bg"
+strategy = "b3"
 fault = "f5"
 
 [[cells]]
-strategy = "bg"
+strategy = "b3"
 fault = "f6"
-
-[[cells]]
-strategy = "bg"
-fault = "f8"
-
-# Follow-up (2026-11-08): S3 with the experiment at 10% per template, the same
-# weight as the canary's first step, so S1 vs S3 isn't confounded by 10% vs 20%.
-# F0 checks for false alarms at the lower traffic; F1-F5 are the faults E catches.
-
-[[cells]]
-strategy = "s3w10"
-fault = "f0"
-
-[[cells]]
-strategy = "s3w10"
-fault = "f1"
-
-[[cells]]
-strategy = "s3w10"
-fault = "f3"
-
-[[cells]]
-strategy = "s3w10"
-fault = "f4"
-
-[[cells]]
-strategy = "s3w10"
-fault = "f5"

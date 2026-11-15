@@ -3,7 +3,8 @@ resources:
   - peer-authentication.yaml
   - services.yaml
   - virtual-services.yaml
-  - smoke-test.yaml
+  - smoke-test.yaml # not used by any strategy for now
+  - preview-load.yaml
   - post-promotion-analysis.yaml
   - rollout.yaml
   - loadgen.yaml

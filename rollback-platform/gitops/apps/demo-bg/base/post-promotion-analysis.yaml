@@ -43,11 +43,12 @@ spec:
               istio_request_duration_milliseconds_bucket{reporter="destination",
                 namespace="demo-bg", rollouts_pod_template_hash="{{args.new-hash}}"}[1m])))
 
-    # The new pod already ran during the smoke test, so its startup jump is
-    # over by now; 60s in, the 1m window holds only steady-state samples.
+    # Without a pre-promotion analysis (B1) the pod is promoted seconds after
+    # it starts, so wait 90s, as canary-health does: by then the 1m window no
+    # longer holds the startup jump of the memory.
     - name: memory-growth
       interval: 20s
-      initialDelay: 60s
+      initialDelay: 90s
       count: 4
       failureLimit: 0
       successCondition: len(result) > 0 && result[0] <= 0.05

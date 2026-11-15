@@ -1,0 +1,11 @@
+# B0, the blue-green control: no analysis. Users are switched to the new
+# version as soon as it is Ready; only the progress deadline can stop it.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches:
+  - target: {kind: Rollout, name: demo-bg}
+    patch: |-
+      - op: remove
+        path: /spec/strategy/blueGreen/prePromotionAnalysis
+      - op: remove
+        path: /spec/strategy/blueGreen/postPromotionAnalysis
