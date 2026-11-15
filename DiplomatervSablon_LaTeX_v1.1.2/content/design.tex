@@ -281,7 +281,7 @@ The AnalysisTemplate \texttt{canary-vs-baseline} checks three differences every 
 
 Each experiment pod receives 10\,\% of the users, the same share as the first canary step. In real use every request comes from a real user, and a larger experiment weight would show the new version to more users than the first canary step would.
 
-The experiment is not part of the default release. In the first experiments it ran between mirroring and the canary steps, but it catches the same faults as the canary steps, so the canary after it changed no outcome and only added time, and it is the most expensive mechanism, at about three minutes and two extra pods per release (\autoref{sec:EvalFirstMatrix}). It remains available as a strategy of its own, the relative alternative to the canary steps.
+The experiment is not part of the default release. It catches the same faults as the canary steps, so the canary after it would only add time, and it is the most expensive mechanism, at about three minutes and two extra pods per release (\autoref{sec:EvalStrategies}). It remains available as a strategy of its own, the relative alternative to the canary steps.
 
 %----------------------------------------------------------------------------
 \subsection{Blue-green release}

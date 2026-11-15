@@ -4,9 +4,7 @@
 %----------------------------------------------------------------------------
 \providecommand{\miss}{$\times$}
 
-This chapter evaluates the automated rollback platform experimentally, in two rounds. The \emph{first matrix} combined three detection mechanisms of a canary release (traffic mirroring, a baseline experiment and metric-checked canary steps) in every possible way, added a blue-green release with a smoke test, and released each of the nine strategies with eight versions of the demo application, one healthy and seven faulty: 72 releases. Its results showed that most combinations only added time, and that some comparisons were not fair. I therefore designed a \emph{second matrix}, which tests each mechanism on its own and only the one combination per release type whose parts cover each other's gaps, and which treats blue-green like the canary: its checks before and after the switch are tested alone and together. It consists of 63 releases. All releases were run, observed and measured by an automated trial runner without manual intervention.
-
-\autoref{sec:EvalQuestions} states the research questions. \autoref{sec:EvalSetup} describes the environment, the faults, the mechanisms and the strategies of both matrices, and \autoref{sec:EvalRunner} the trial runner and how it measures a release. \autoref{sec:EvalFirstMatrix} summarises the first matrix and the lessons that shaped the second, whose results \autoref{sec:EvalResults} presents. \autoref{sec:EvalDeadline} analyses the one result that contradicted the expectations in both matrices: a progress deadline that did not fire. \autoref{sec:EvalDiscussion} answers the research questions, and \autoref{sec:EvalThreats} discusses the threats to validity.
+This chapter evaluates the automated rollback platform experimentally. Five canary and four blue-green strategies, each testing a detection mechanism on its own or one combination whose parts cover each other's gaps, were released with seven versions of the demo application, one healthy and six faulty: 63 releases, run, observed and measured by an automated trial runner without manual intervention. The chapter states the research questions, describes the setup and the trial runner, presents the results, analyses the one result that contradicted the expectations, a progress deadline that did not fire, and closes with the answers to the research questions and the threats to validity.
 
 %----------------------------------------------------------------------------
 \section{Research questions}
@@ -18,7 +16,7 @@ The experiments answer five questions.
 	\item[RQ1] Which detection mechanism catches which kind of fault, and how fast?
 	\item[RQ2] What does each strategy cost, in users exposed to a faulty version and in the time and resources of a healthy release?
 	\item[RQ3] How do absolute checks (fixed thresholds on the new version alone) compare with relative checks (the new version compared with a fresh copy of the old one)?
-	\item[RQ4] Do combined mechanisms protect better than single ones, and which combinations only add time?
+	\item[RQ4] Do combined mechanisms protect better than single ones, and at what cost?
 	\item[RQ5] What changes when the gradual canary is replaced by an all-at-once blue-green switch, and what do its checks before and after the switch contribute?
 \end{description}
 
@@ -40,8 +38,11 @@ The demo application is a small HTTP service with one replica per version. A loa
 %----------------------------------------------------------------------------
 \subsection{Fault injection}
 \label{sec:EvalFaults}
+\label{sec:EvalEnvFaults}
 %----------------------------------------------------------------------------
-Each fault is a setting of the demo application (\autoref{tab:EvalFaults}). In the first matrix, each fault was a separate image, built by the CI pipeline from the same source commit with a different default value of the setting; in the second matrix, a single healthy image was used and the fault was set through environment variables of the pod template (\autoref{sec:EvalEnvFaults}). In both cases a fault is part of the version being released, and it is present from the first request on, exactly as a bug shipped in a release would be. The faults were chosen to cover different kinds of failure: loud and fast (F1, F3), below a threshold (F2), noisy (F4), slow-burning (F5), failing at start-up (F6) and semantic, invisible to request metrics (F8). F0 is the healthy control, used to detect false alarms and to measure the cost of a release that should simply succeed. F8 was used only in the first matrix, because the only check that can see it, the smoke test, is not part of the second (\autoref{sec:EvalStrategies}).
+Each fault is a setting of the demo application (\autoref{tab:EvalFaults}), which it reads from environment variables at start-up. The CI pipeline builds a single healthy image, and a fault is a set of environment variables in the pod template of the Rollout, kept in a small Kustomize patch in the GitOps repository~\cite{KustomizePatches}, which the trial runner rewrites to start a release. Every fault also sets its own \texttt{APP\_VERSION}, so that even the healthy release F0 changes the pod template. From the platform's point of view this is the same as a new image: a rollout is triggered by any change to the pod template, and the pod-template hash is computed from the whole template~\cite{ArgoRolloutsSpec,K8sDeployment}, so a changed variable creates a new ReplicaSet and runs through every step of the strategy. None of the checks looks at the image name; they see only the behaviour of the pods. This follows two established practices: building the binary only once and promoting the same artefact through every stage~\cite{Humble10}, and keeping the configuration that varies between deploys in environment variables~\cite{TwelveFactorConfig}.
+
+A fault is thus part of the version being released, and it is present from the first request on, exactly as a bug shipped in a release would be. The faults cover different kinds of failure: loud and fast (F1, F3), below a threshold (F2), noisy (F4), slow-burning (F5) and failing at start-up (F6). F0 is the healthy control, used to detect false alarms and to measure the cost of a release that should simply succeed.
 
 \begin{table}[ht]
 	\footnotesize
@@ -57,10 +58,9 @@ Each fault is a setting of the demo application (\autoref{tab:EvalFaults}). In t
 		F4 & random delay of 0--1500\,ms & \texttt{LATENCY\_JITTER\_MS=1500} & noisy tail latency \\
 		F5 & memory grows by 20\,MiB per minute & \texttt{LEAK\_MB\_PER\_MIN=20} & slow-burn \\
 		F6 & readiness probe always fails & \texttt{FAIL\_READINESS=true} & start-up \\
-		F8 & wrong result with HTTP 200 & \texttt{WRONG\_ANSWER=true} & semantic (first matrix only) \\
 		\bottomrule
 	\end{tabular}
-	\caption{Injected faults. (F7, an environment fault, was dropped from the scope; its identifier was kept free.)}
+	\caption{Injected faults.}
 	\label{tab:EvalFaults}
 \end{table}
 
@@ -68,19 +68,19 @@ Each fault is a setting of the demo application (\autoref{tab:EvalFaults}). In t
 \subsection{Detection mechanisms}
 \label{sec:EvalMechanisms}
 %----------------------------------------------------------------------------
-Three mechanisms can protect a canary release, and each can be switched on or off independently. When several are on, they always run in the same order, mirroring first, then the experiment, then the canary steps. A blue-green release has two checks of its own, one before and one after the switch.
+Three mechanisms can protect a canary release, and each can be switched on or off independently. When several are on, they always run in the same order: mirroring first, then the experiment, then the canary steps. A blue-green release has two checks of its own, one before and one after the switch.
 
 \paragraph{M -- traffic mirroring.} The new version is scaled to one pod while it receives no user traffic, and Istio copies every \texttt{GET /api/work} request to it~\cite{IstioVirtualService}. The responses of the copy are discarded, so no user ever sees them. During mirroring, the AnalysisTemplate \texttt{mirror-health} takes three measurements 20\,s apart, after a 30\,s initial delay. It measures the success rate (at least 95\,\%, no failed measurement allowed) and the 95th percentile latency (at most 300\,ms, one failure allowed) of the requests the new pods received. It has no memory check, because mirroring lasts only about 70\,s.
 
-\paragraph{E -- baseline experiment.} An Argo Rollouts \emph{experiment} step starts two fresh pods side by side for three minutes, a \emph{baseline} running the stable version and a \emph{canary} running the new one, and sends a share of the users to each~\cite{ArgoRolloutsExperiment}: 20\,\% each in the first matrix, 10\,\% each in the second. The AnalysisTemplate \texttt{canary-vs-baseline} compares the two every 20\,s: the canary's 5xx ratio may exceed the baseline's by at most 5 percentage points, its p95 latency by at most 100\,ms, and its memory growth by at most 0.05\,MiB/s. Because both pods start at the same moment, effects of start-up, such as the initial memory allocation, cancel out in the difference. This makes E the only \emph{relative} check of the platform.
+\paragraph{E -- baseline experiment.} An Argo Rollouts \emph{experiment} step starts two fresh pods side by side for three minutes, a \emph{baseline} running the stable version and a \emph{canary} running the new one, and sends 10\,\% of the users to each~\cite{ArgoRolloutsExperiment}. The AnalysisTemplate \texttt{canary-vs-baseline} compares the two every 20\,s: the canary's 5xx ratio may exceed the baseline's by at most 5 percentage points, its p95 latency by at most 100\,ms, and its memory growth by at most 0.05\,MiB/s. Because both pods start at the same moment, effects of start-up, such as the initial memory allocation, cancel out in the difference. This makes E the only \emph{relative} check of the platform.
 
 \paragraph{C -- canary steps.} The canary receives 10\,\% of the users for one minute, then 50\,\% for one minute, before being promoted. A background analysis, \texttt{canary-health}, runs during these steps and checks the success rate (at least 95\,\%) and the p95 latency (at most 300\,ms) every 30\,s, with one failure allowed, and the memory growth (at most 0.05\,MiB/s) every 30\,s after a 90\,s delay, with no failure allowed. These are \emph{absolute} thresholds, applied to the new version on its own.
 
 \paragraph{Blue-green: preview and switch.} The blue-green variant of the demo application uses a separate Rollout with an active and a preview Service~\cite{ArgoRolloutsBlueGreen}. The new version first starts behind the preview Service, which receives no user traffic. A pre-promotion analysis runs while it is there; when it passes, all users are switched to the new version at once. A post-promotion analysis then watches the now active version and aborts the release, switching the users back, if it fails. The old version keeps running for 300\,s after the switch, so the switch back is instant.
 
-\paragraph{Pre -- pre-promotion analysis on a load Job.} In the second matrix, the pre-promotion analysis \texttt{preview-load} is the blue-green counterpart of mirroring. Since the preview receives no requests, a Kubernetes Job started by the analysis~\cite{ArgoRolloutsJob} generates them: for 60\,s it sends the same request at the same pace as the user load generator to the preview Service, about 265 requests in all. The Job never fails because of an answer; it only produces load. Two metrics of the same analysis, which run in parallel with the Job, judge the new pods with the same queries, thresholds and timing as \texttt{mirror-health}: the success rate (no failure allowed) and the p95 latency (one failure allowed), three measurements 20\,s apart after 30\,s. Like mirroring, it has no memory check. In the first matrix, the pre-promotion analysis was instead a \emph{smoke test}: a Job that sent 50 requests and failed if any of them returned an error or a wrong result. Both Jobs run inside the mesh under strict mutual TLS, which requires the native sidecar mode of Kubernetes, so that the Envoy proxy starts before the Job's container and stops after it~\cite{K8sSidecar}.
+\paragraph{Pre -- pre-promotion analysis on a load Job.} The pre-promotion analysis \texttt{preview-load} is the blue-green counterpart of mirroring. Since the preview receives no requests, a Kubernetes Job started by the analysis~\cite{ArgoRolloutsJob} generates them: for 60\,s it sends the same request at the same pace as the user load generator to the preview Service, about 265 requests in all. The Job never fails because of an answer; it only produces load. Two metrics of the same analysis, which run in parallel with the Job, judge the new pods with the same queries, thresholds and timing as \texttt{mirror-health}. Like mirroring, it has no memory check.
 
-\paragraph{Post -- post-promotion analysis.} \texttt{bg-post-promotion} checks the success rate and the p95 latency of the new version under all users six times, 20\,s apart after 30\,s, with one failure allowed, and its memory growth four times after a delay, with no failure allowed. The delay was 60\,s in the first matrix and 90\,s in the second, as in \texttt{canary-health}, because without a pre-promotion analysis the new pod is switched to the users seconds after it starts, while its start-up allocation is still in the window. The analysis lasts about two and a half minutes.
+\paragraph{Post -- post-promotion analysis.} \texttt{bg-post-promotion} checks the success rate and the p95 latency of the new version under all users six times, 20\,s apart after 30\,s, with one failure allowed, and its memory growth four times after a 90\,s delay, with no failure allowed. The delay is the same as in \texttt{canary-health}, because without a pre-promotion analysis the new pod is switched to the users seconds after it starts, while its start-up allocation is still in the window. The analysis lasts about two and a half minutes.
 
 \paragraph{The progress deadline.} Independently of the strategy, every Rollout sets \texttt{progressDeadlineSeconds: 120} and \texttt{progressDeadlineAbort: true}~\cite{ArgoRolloutsSpec}. If a release makes no progress for 120\,s, for example because its pods never become Ready, the controller should abort it. This is a property of the Rollout, not a step, so it is part of every strategy including the controls.
 
@@ -88,41 +88,12 @@ Three mechanisms can protect a canary release, and each can be switched on or of
 \subsection{Strategies}
 \label{sec:EvalStrategies}
 %----------------------------------------------------------------------------
-\paragraph{First matrix: every combination.} In the first matrix, the three canary mechanisms were combined in a full factorial design~\cite{Montgomery17}: each of M, E and C is either on or off, which gives the eight strategies S0--S7 of \autoref{tab:EvalStrategiesV1}, plus the blue-green strategy BG with the smoke test and the post-promotion analysis. The single-mechanism strategies S1--S3 show what each mechanism catches on its own, while S4--S7 show whether a combination catches more, or only takes longer. S7, with all three, was the platform's default configuration at that time.
-
-\begin{table}[ht]
-	\footnotesize
-	\centering
-	\begin{tabular}{ l c c c l }
-		\toprule
-		ID & M & E & C & Meaning \\
-		\midrule
-		S0 & & & & control: no progressive delivery, only the progress deadline \\
-		\midrule
-		S1 & & & \checkmark & canary alone \\
-		S2 & \checkmark & & & mirroring alone \\
-		S3 & & \checkmark & & experiment alone, 20\,\% per template \\
-		\midrule
-		S4 & \checkmark & & \checkmark & mirroring, then canary \\
-		S5 & & \checkmark & \checkmark & experiment, then canary \\
-		S6 & \checkmark & \checkmark & & mirroring, then experiment \\
-		\midrule
-		S7 & \checkmark & \checkmark & \checkmark & all three (the default configuration of the first matrix) \\
-		\midrule
-		BG & & & & blue-green: preview, smoke Job, switch, post-promotion analysis \\
-		\bottomrule
-	\end{tabular}
-	\caption{The strategies of the first matrix. M: mirroring, E: baseline experiment, C: canary steps.}
-	\label{tab:EvalStrategiesV1}
-\end{table}
-
-\paragraph{Second matrix: mechanisms alone, and one combination each.} The results of the first matrix (\autoref{sec:EvalFirstMatrix}) showed that a combination changes the outcome only where its second mechanism catches a fault that its first one lets through; otherwise it only adds time. For the second matrix I therefore kept every mechanism on its own and only those combinations whose parts cover each other's gaps (\autoref{tab:EvalStrategies}). The reasons for each choice are the following.
+The strategies (\autoref{tab:EvalStrategies}) test every mechanism on its own, and only those combinations whose parts cover each other's gaps. The reasons for each choice are the following.
 \begin{itemize}
-	\item \textbf{Mirroring and canary (S4).} Mirroring catches loud faults without exposing a user but cannot see the leak, which the canary's memory check catches; the two cover each other. S4 is now the platform's default configuration.
-	\item \textbf{No combination with the experiment.} The experiment and the canary catch the same faults, so one after the other adds time and nothing else: in the first matrix, S5 had the same outcomes as S3, and S7 the same as S6. Mirroring and the experiment cover each other as well (S6), but the experiment costs about three minutes and two pods per release, and the canary steps are needed anyway to reach 100\,\% gradually, so I chose the cheaper pair and test the experiment, the only relative check, on its own.
-	\item \textbf{The experiment at 10\,\% only (S3).} At a higher weight than the canary's first step, the experiment shows the new version to more users than the canary would, and a comparison between the two mixes the mechanism with the weight (\autoref{sec:EvalEqualWeight}). The second matrix runs it only at 10\,\% per template, the weight of the canary's first step.
+	\item \textbf{Mirroring and canary (S4).} Mirroring catches loud faults without exposing a user but cannot see a slow leak, which the canary's memory check catches; the two cover each other. S4 is the platform's default configuration.
+	\item \textbf{No combination with the experiment.} The experiment and the canary both check errors, latency and memory under user traffic, so one after the other would add time and nothing else. The experiment is also the most expensive mechanism, at about three minutes and two extra pods per release, and the canary steps are needed anyway to reach 100\,\% gradually. The experiment, the only relative check, is therefore tested on its own.
+	\item \textbf{The experiment at 10\,\%.} Each experiment template receives the share of the canary's first step, so that the experiment shows the new version to no more users than the canary would, and a comparison between the two is not distorted by the weight.
 	\item \textbf{Blue-green in the same pattern.} B0 is the blue-green control, protected only by the progress deadline. B1 has only the post-promotion analysis, which judges the new version on real users, like the canary. B2 has only the pre-promotion analysis, which judges it before any user is switched, like mirroring. B3 has both and corresponds to S4; it is the default configuration of the blue-green application.
-	\item \textbf{The smoke test is set aside.} The smoke test checks the content of the answers, a functional test rather than a metric check. To compare blue-green with the canary on the same kind of checks, the pre-promotion analysis of the second matrix measures metrics on generated load instead; the smoke test, and with it F8, is left for later work.
 \end{itemize}
 
 \begin{table}[ht]
@@ -144,19 +115,19 @@ Three mechanisms can protect a canary release, and each can be switched on or of
 		B3 & pre + post & both (default) \\
 		\bottomrule
 	\end{tabular}
-	\caption{The strategies of the second matrix.}
+	\caption{The strategies.}
 	\label{tab:EvalStrategies}
 \end{table}
 
-\paragraph{Why a Job in blue-green but not in the canary.} A check before the users are switched needs requests. In a canary release, Argo Rollouts can copy the real users' requests to the new version, because the canary strategy controls the routes of the VirtualService and has a mirroring step~\cite{ArgoRolloutsTraffic}. The blue-green strategy has neither: it switches the selectors of its two Services and leaves the routes alone. A mirror route to the preview Service could be written into Git by hand, but between releases the preview Service selects the same pods as the active one, so a permanent mirror would double their load, and the strategy cannot switch a route on only for the pre-promotion phase. Generating the traffic is the established alternative: Flagger, for instance, comes with a load testing service that generates traffic during the analysis of a workload that receives none~\cite{FlaggerWebhooks}, and its blue-green strategy runs load tests against the new pods before the switch~\cite{FlaggerStrategies}. I used a Job started by the analysis itself, so that the load exists only during the analysis of each release and needs no other component. In the canary, a Job would add nothing: mirroring already provides real requests, which are more representative than any generated ones. In the demo the two are equivalent, since the load generator itself is synthetic and the Job copies its request and pace.
+\paragraph{Why a Job in blue-green but not in the canary.} A check before the users are switched needs requests. In a canary release, Argo Rollouts can copy the real users' requests to the new version, because the canary strategy controls the routes of the VirtualService and has a mirroring step~\cite{ArgoRolloutsTraffic}. The blue-green strategy has neither: it switches the selectors of its two Services and leaves the routes alone. A mirror route to the preview Service could be written into Git by hand, but between releases the preview Service selects the same pods as the active one, so a permanent mirror would double their load, and the strategy cannot switch a route on only for the pre-promotion phase. Generating the traffic is the established alternative: Flagger, for instance, comes with a load testing service that generates traffic during the analysis of a workload that receives none~\cite{FlaggerWebhooks}, and its blue-green strategy runs load tests against the new pods before the switch~\cite{FlaggerStrategies}. I used a Job started by the analysis itself, so that the load exists only during the analysis of each release and needs no other component. In the canary, a Job would add nothing: mirroring already provides real requests, which are more representative than any generated ones.
 
-The parameters of each mechanism (durations, weights, intervals and thresholds) are the same in every strategy of a matrix, so any difference between two strategies comes only from the mechanisms that differ between them. The strategies are implemented as Kustomize components~\cite{KustomizeComponents}, one per strategy, each of which removes or replaces the parts of the default Rollout that the strategy does not use. The component of the default strategy is empty, so the default configuration is tested exactly as it is deployed. Switching the strategy changes a single line of the development overlay.
+The parameters of each mechanism (durations, weights, intervals and thresholds) are the same in every strategy, so any difference between two strategies comes only from the mechanisms that differ between them. The strategies are implemented as Kustomize components~\cite{KustomizeComponents}, one per strategy, each of which removes or replaces the parts of the default Rollout that the strategy does not use. The component of the default strategy is empty, so the default configuration is tested exactly as it is deployed. Switching the strategy changes a single line of the overlay.
 
 %----------------------------------------------------------------------------
 \section{Trial automation}
 \label{sec:EvalRunner}
 %----------------------------------------------------------------------------
-Running more than a hundred releases by hand, with a clock and a dashboard, would be slow and, worse, inconsistent. The trial runner, a Python program using only the standard library, performs every run in the same way and records what happened in enough detail to recompute every measurement later.
+Running 63 releases by hand, with a clock and a dashboard, would be slow and, worse, inconsistent. The trial runner, a Python program using only the standard library, performs every run in the same way and records what happened in enough detail to recompute every measurement later.
 
 %----------------------------------------------------------------------------
 \subsection{A trial as a sequence of commits}
@@ -166,12 +137,12 @@ Because Argo CD reverts any change made to the cluster directly, the runner chan
 \begin{enumerate}
 	\item \textbf{Preconditions.} The other application must not be releasing, and the application under test must be Healthy on its healthy reset version. Otherwise the runner resets it first.
 	\item \textbf{Strategy.} If the strategy differs from the current one, the runner edits the component line of the application's overlay, commits, pushes, asks Argo CD to refresh, and waits until Argo CD reports this commit as synced.
-	\item \textbf{Trigger.} Once the observer has recorded the initial state, the runner commits the fault under test: its image tag in the first matrix, its environment variables in the second. This commit starts the release.
+	\item \textbf{Trigger.} Once the observer has recorded the initial state, the runner commits the environment variables of the fault under test. This commit starts the release.
 	\item \textbf{Observation.} The runner follows the release until it is promoted, or until it is aborted and no user traffic reaches the new version for 10\,s. If neither happens within 20 minutes (4 minutes for F6), it records a timeout and aborts the release itself.
 	\item \textbf{Measurement.} Once the last requests of the release have been scraped, the timeline and Prometheus are turned into measurements, which are saved as one row of a CSV file and, together with the raw timeline, as a JSON record.
 	\item \textbf{Reset.} The runner commits the healthy reset version. After an abort this is instant, since the stable version is already running. After a promotion the faulty version has become stable, so the reset is itself a release; it runs under the control strategy (S0 or B0) to take seconds instead of minutes. A 60\,s pause then separates the trial from the next one, so that the one-minute rate windows of the queries do not overlap.
 \end{enumerate}
-Every trial is thus traceable to the commits that defined its strategy and triggered its release. The runner groups the trials by strategy to minimise switches, and skips trials that already have a result, so an interrupted matrix can be resumed. At the end of a matrix it leaves each application on its default strategy.
+Every trial is thus traceable to the commits that defined its strategy and triggered its release. The runner groups the trials by strategy to minimise switches, and skips trials that already have a result, so an interrupted run can be resumed. At the end it leaves each application on its default strategy.
 
 %----------------------------------------------------------------------------
 \subsection{Observation}
@@ -196,7 +167,7 @@ Where users go is read from the routing objects themselves, not from the Rollout
 		\midrule
 		outcome & \emph{promoted}, \emph{aborted}, or \emph{timeout} if the release did not end by itself \\ \addlinespace
 		caught by & the check whose failing measurement finished first, or the progress deadline \\ \addlinespace
-		TTD & time to detect: from the first request of any kind to the new version (a mirrored copy, a user request or a request of a pre-promotion Job) until detection \\ \addlinespace
+		TTD & time to detect: from the first request of any kind to the new version (a mirrored copy, a user request or a request of the load Job) until detection \\ \addlinespace
 		TTR & time to recover: from detection until no user and no mirrored request reaches the new version \\ \addlinespace
 		max.\ exposure & the highest share of users routed to the new version \\ \addlinespace
 		user requests & requests the ingress gateway sent to the new version, counted at the new pods' sidecars; of these, \emph{affected} are those answered with a 5xx code or slower than 500\,ms \\ \addlinespace
@@ -208,43 +179,14 @@ Where users go is read from the routing objects themselves, not from the Rollout
 	\label{tab:EvalMeasurements}
 \end{table}
 
-Request counts come from the Istio standard metrics \texttt{istio\_requests\_total} and \texttt{istio\_request\_duration\_milliseconds}~\cite{IstioMetrics}, reported by the sidecars of the new version and selected by its pod-template hash, so that every route to it is counted, including the stable Service after a promotion. The experiment's canary pod has its own hash, so it is counted through its own Service. Mirrored copies also come from the gateway, so the user window starts only when mirroring has ended. Mirrored copies and the requests of the pre-promotion Jobs, recognised by the name of the calling workload, are counted separately. The threshold for a slow request is 500\,ms rather than the 300\,ms of the latency checks, because Istio's histogram has no bucket between 250 and 500\,ms~\cite{PromHistograms}.
+Request counts come from the Istio standard metrics \texttt{istio\_requests\_total} and \texttt{istio\_request\_duration\_milliseconds}~\cite{IstioMetrics}, reported by the sidecars of the new version and selected by its pod-template hash, so that every route to it is counted, including the stable Service after a promotion. The experiment's canary pod has its own hash, so it is counted through its own Service. Mirrored copies also come from the gateway, so the user window starts only when mirroring has ended. Mirrored copies and the requests of the load Job, recognised by the name of the calling workload, are counted separately. The threshold for a slow request is 500\,ms rather than the 300\,ms of the latency checks, because Istio's histogram has no bucket between 250 and 500\,ms~\cite{PromHistograms}.
 
-\paragraph{Exact counting.} The usual way to count requests in a window, PromQL's \texttt{increase()}, extrapolates the counter to the edges of the window~\cite{PromQL}. For short bursts this overcounts considerably: in a validation run, it reported 63 smoke-test requests where the Job's log showed exactly 50. The runner therefore takes the last value of each counter series up to the end of the window and subtracts its last value before the start, treating a series that did not exist yet as zero. With this method the same run gives exactly 50. The windows end 30\,s after the event that closes them, to include the final scrape, and the runner waits until that time has passed before it measures.
+\paragraph{Exact counting.} The usual way to count requests in a window, PromQL's \texttt{increase()}, extrapolates the counter to the edges of the window~\cite{PromQL}. For short bursts this overcounts considerably: in a validation run, it reported 63 requests of a Job whose log showed exactly 50. The runner therefore takes the last value of each counter series up to the end of the window and subtracts its last value before the start, treating a series that did not exist yet as zero. With this method the same run gives exactly 50. The windows end 30\,s after the event that closes them, to include the final scrape, and the runner waits until that time has passed before it measures.
 
-\paragraph{Validation.} Before the first matrix, the runner was validated on a recorded blue-green release (promoted, 50 smoke requests, no errors), on a synthetic aborted canary with mirroring, and on a live faulty blue-green release. These runs revealed two defects, which were fixed before the matrix: snapshots taken before the release started still showed the analysis runs of the previous release, and the recorded Git commit did not yet include the trigger. The first matrix revealed four more, all in the measurement code and none in the observation, so the stored timelines were re-measured afterwards: promoted releases were reported with 0\,\% exposure, their user requests were undercounted, progress-deadline aborts were labelled with the raw controller message, and pods that appeared in a single snapshot were counted with zero lifetime. The second matrix was preceded by its own validation runs (\autoref{sec:EvalV2Validation}).
-
-\subsection{Faults as configuration}
-\label{sec:EvalEnvFaults}
-
-The demo application reads its fault settings from environment variables at start-up, and the separate images of the first matrix differed only in the default values of those variables. After the first matrix, the injection was therefore simplified: the CI pipeline now builds a single healthy image, and a fault is a set of environment variables in the pod template of the Rollout, kept in a small Kustomize patch in the GitOps repository~\cite{KustomizePatches}. The trial runner writes this patch instead of the image tag. Every fault also sets its own \texttt{APP\_VERSION}, so that even the healthy release F0 changes the pod template.
-
-The two methods are equivalent from the platform's point of view. The pod template of a Rollout behaves like that of a Deployment~\cite{ArgoRolloutsSpec}: a rollout is triggered by any change to the pod template, not only by a new image, and the pod-template hash is computed from the whole template~\cite{K8sDeployment}. A changed environment variable therefore creates a new ReplicaSet and runs through the same mirroring, experiment and canary steps; the experiment's templates copy the environment with the rest of the pod template. None of the checks looks at the image name: they see only the behaviour of the pods. The change also removes a CI build from every new fault, about two minutes in this setup, and follows two established practices: building the binary only once and promoting the same artefact through every stage~\cite{Humble10}, and keeping the configuration that varies between deploys in environment variables, separate from the code~\cite{TwelveFactorConfig}.
-
-The switch was validated with one trial of S1 under F1, run through the new runner code and compared with the first-matrix run of the same cell (\autoref{tab:EvalEnvValidation}). Both releases were aborted by the same metric, about 58\,s after the first request reached the new version, after about the same number of user requests. The only larger difference, the peak exposure, is a race between two events about 60\,s after the start: the second failed measurement of the success rate and the step from 10\,\% to 50\,\%. In the matrix run the abort came first; in the validation run the step came 2\,s earlier, which raised the peak but barely the number of users exposed. The first matrix used the images, the follow-up runs of \autoref{sec:EvalEqualWeight} and the whole second matrix the environment variables.
-
-\begin{table}[ht]
-	\centering
-	\begin{tabular}{lll}
-		\toprule
-		Measurement & Fault in the image & Fault in the environment \\
-		\midrule
-		outcome & aborted & aborted \\
-		caught by & canary success rate & canary success rate \\
-		TTD [s] & 57.0 & 58.7 \\
-		detection from start [s] & 67.8 & 69.5 \\
-		TTR [s] & 1.8 & 3.1 \\
-		user requests (5xx) & 21 (6) & 22 (7) \\
-		peak exposure & 10\,\% & 50\,\% \\
-		\bottomrule
-	\end{tabular}
-	\caption{S1 under F1 with the fault in the image (first matrix) and in the environment (validation run).}
-	\label{tab:EvalEnvValidation}
-\end{table}
-
+%----------------------------------------------------------------------------
 \subsection{Validation of the metrics}
 \label{sec:EvalMetricValidation}
-
+%----------------------------------------------------------------------------
 Every check, and every measurement of this chapter, rests on the assumption that Prometheus reports the injected faults as they were configured. This was tested separately from the releases. The faults F0--F5 ran side by side in a temporary namespace, one pod each, built from the same image and with the same sidecar as in the platform, and a client pod sent about two requests per second to each of them for five minutes, after a warm-up of 75\,s. Each fault was then seen in three ways:
 \begin{itemize}
 	\item \textbf{configured:} the value of the environment variable;
@@ -287,116 +229,30 @@ Every check, and every measurement of this chapter, rests on the assumption that
 \paragraph{An exact latency check.} The error can be avoided without leaving Prometheus. The bucket counts themselves are exact, so the share of requests slower than a bucket boundary is exact as well, and the condition that at most 5\,\% of the requests take longer than 250\,ms is equivalent to a p95 of at most 250\,ms, without any interpolation. A latency check with its threshold on a bucket boundary, written as the share of slow requests, is therefore exact; this is how the measurements of this chapter count slow requests (\autoref{sec:EvalMeasurements}). The average latency, computed from the sum and the count of the histogram, is exact too, but it hides a slow minority of the requests. Finer buckets around the threshold reduce the error without removing it, and the exact percentile at an arbitrary threshold needs the individual requests from access logs or traces, which Prometheus does not store~\cite{IstioAccessLogs}. The trials kept the threshold of 300\,ms, so that every strategy was judged by the same checks and the results stay comparable; outside these trials, a threshold of 250 or 500\,ms, checked as the share of slower requests, is recommended.
 
 %----------------------------------------------------------------------------
-\section{The first matrix}
-\label{sec:EvalFirstMatrix}
-%----------------------------------------------------------------------------
-The 72 trials of the first matrix ran unattended on 1 November 2026 between 13:15 and 17:35, in 4 hours and 20 minutes. Before the first run, I wrote down the expected result of every cell from the configuration alone. \autoref{tab:EvalDetectionV1} shows what stopped each release and the highest share of users exposed to it. \textbf{70 of the 72 cells matched the expectations.} The two exceptions are S6 and S7 with F6, where the progress deadline did not fire and the release stayed at its first step until the runner aborted it after four minutes; \autoref{sec:EvalDeadline} analyses them.
-
-\begin{table}[ht]
-	\scriptsize
-	\centering
-	\setlength{\tabcolsep}{3pt}
-	\begin{tabular}{ l c c c c c c c c }
-		\toprule
-		& F0 & F1 & F2 & F3 & F4 & F5 & F6 & F8 \\
-		\midrule
-		\textbf{S0} & pass & \miss & \miss & \miss & \miss & \miss & DL · 0\,\% & \miss \\
-		\textbf{S1} C & pass & C · 10\,\% & \miss & C · 10\,\% & C · 10\,\% & C · 50\,\% & DL · 0\,\% & \miss \\
-		\textbf{S2} M & pass & M · 0\,\% & \miss & M · 0\,\% & M · 0\,\% & \miss & DL · 0\,\% & \miss \\
-		\textbf{S3} E & pass & E · 20\,\% & \miss & E · 20\,\% & E · 20\,\% & E · 20\,\% & DL\textsubscript{E} · 0\,\% & \miss \\
-		\textbf{S4} M+C & pass & M · 0\,\% & \miss & M · 0\,\% & M · 0\,\% & C · 50\,\% & DL · 0\,\% & \miss \\
-		\textbf{S5} E+C & pass & E · 20\,\% & \miss & E · 20\,\% & E · 20\,\% & E · 20\,\% & DL\textsubscript{E} · 0\,\% & \miss \\
-		\textbf{S6} M+E & pass & M · 0\,\% & \miss & M · 0\,\% & M · 0\,\% & E · 20\,\% & \textbf{hang} · 0\,\% & \miss \\
-		\textbf{S7} M+E+C & pass & M · 0\,\% & \miss & M · 0\,\% & M · 0\,\% & E · 20\,\% & \textbf{hang} · 0\,\% & \miss \\
-		\textbf{BG} & pass & Job · 0\,\% & Job · 0\,\% & post · 100\,\% & post · 100\,\% & post · 100\,\% & DL · 0\,\% & Job · 0\,\% \\
-		\bottomrule
-	\end{tabular}
-	\caption{First matrix: the check that stopped the release, and the highest share of users exposed. pass: the healthy version was promoted, as it should be. \miss: not caught, the faulty version reached all users. DL: progress deadline; DL\textsubscript{E}: the experiment's own progress deadline. Job: the smoke test. post: post-promotion analysis. hang: no check stopped the release.}
-	\label{tab:EvalDetectionV1}
-\end{table}
-
-The results that shaped the second matrix were the following.
-\begin{itemize}
-	\item \textbf{Each mechanism has a characteristic detection time}, set by its initial delay, interval and failure limit rather than by the fault: mirroring caught F1 in 27--29\,s and latency in 47--49\,s, the experiment caught errors and latency in 47--51\,s and the leak in 57--61\,s, the canary errors and latency in 57--59\,s and the leak in 87\,s. The smoke Job caught F1, F2 and F8 in 15--17\,s, the post-promotion analysis F3--F5 in 82--111\,s, with every user on the faulty version. Recovery took 0.6--3.2\,s (median 1.8\,s) after every detection.
-	\item \textbf{A combination helps only where its second mechanism covers a gap of the first.} Mirroring before the canary (S4) moved the loud faults from 10\,\% to 0\,\% exposure, and the experiment after mirroring (S6) caught the leak that mirroring missed. But the canary after the experiment changed no outcome: S5 behaved like S3 and S7 like S6, and each only took longer.
-	\item \textbf{The experiment at 20\,\% exposed more users than the canary} for the loud faults (F1 reached 34 users under S3, 21 under S1), and fewer for the leak (38 against 90 at 50\,\%). The follow-up of \autoref{sec:EvalEqualWeight} showed that the first difference came from the weight, not from the mechanism.
-	\item \textbf{The smoke test was the only check that caught F2 and F8}: F2 because one of its 50 requests failed, which happens in about 64\,\% of the runs ($1 - 0.98^{50}$), and F8 because it checks the content of the answers.
-	\item \textbf{Every mechanism costs time on every release} (\autoref{tab:EvalCostV1}). The experiment was the most expensive: it added 3.1--3.4 minutes and, because it runs two additional pods, 6.6--8.9 pod-minutes to each release.
-\end{itemize}
-
-\begin{table}[ht]
-	\footnotesize
-	\centering
-	\begin{tabular}{ l r r r r r r r r r }
-		\toprule
-		& S0 & S1 & S2 & S3 & S4 & S5 & S6 & S7 & BG \\
-		\midrule
-		duration [min] & 0.2 & 2.1 & 1.6 & 3.4 & 3.7 & 5.5 & 5.0 & 6.8 & 2.7 \\
-		pod-minutes & 0.2 & 2.1 & 1.9 & 6.8 & 4.3 & 11.0 & 9.4 & 12.7 & 2.7 \\
-		\bottomrule
-	\end{tabular}
-	\caption{First matrix: duration and pod-minutes of a healthy release (F0).}
-	\label{tab:EvalCostV1}
-\end{table}
-
-%----------------------------------------------------------------------------
-\subsection{The experiment at the canary's weight}
-\label{sec:EvalEqualWeight}
-
-In the first matrix, the experiment sends 20\,\% of the users to each of its templates, while the canary starts at 10\,\%. A comparison of S1 and S3 therefore mixes two differences, the mechanism and the share of users, and the user counts cannot be attributed to the mechanism alone. To separate them, a follow-up strategy S3w10 was run: S3 with both experiment templates at 10\,\%, the weight of the canary's first step, and everything else unchanged. It was released with F0 and with the four faults that the experiment catches (F1, F3, F4, F5), one run each. These runs used the injection through environment variables of \autoref{sec:EvalEnvFaults}. \autoref{tab:EvalEqualWeight} compares them with S1 and S3 from the first matrix.
-
-\begin{table}[ht]
-	\footnotesize
-	\centering
-	\begin{tabular}{ l l l l }
-		\toprule
-		Fault & S1: canary, 10\,\% & S3: experiment, 20\,\% & S3w10: experiment, 10\,\% \\
-		\midrule
-		F0 & pass, 128\,s, 2.1 & pass, 201\,s, 6.9 & pass, 212\,s, 7.4 \\
-		\addlinespace
-		F1 & 57\,s, 21 (6) & 47\,s, 34 (16) & 69\,s, 32 (7) \\
-		F3 & 58\,s, 23 (23) & 47\,s, 26 (26) & 49\,s, 17 (17) \\
-		F4 & 59\,s, 17 (12) & 50\,s, 24 (17) & 48\,s, 11 (9) \\
-		F5 & 87\,s, 90 (0) at 50\,\% & 57\,s, 38 (0) & 60\,s, 21 (0) \\
-		\bottomrule
-	\end{tabular}
-	\caption{The canary and the experiment at equal weight. F0: outcome, release duration, pod-minutes. Faults: time to detect, user requests served by the faulty version (affected in brackets), and the peak exposure where it differs from the strategy's weight. S1 was stopped by the canary's checks, S3 and S3w10 by the experiment's.}
-	\label{tab:EvalEqualWeight}
-\end{table}
-
-\paragraph{At equal weight, the experiment exposes fewer users.} Halving the weight roughly halved the users exposed by the experiment: F3 reached 17 users instead of 26, F4 11 instead of 24 and F5 21 instead of 38, with detection times within 3\,s of S3. Against the canary at the same weight, the experiment is now ahead for every fault except F1: 17 users instead of 23 for F3, 11 instead of 17 for F4. For the leak the advantage remains the largest, 21 users at 10\,\% instead of 90 users at 50\,\%. The higher user counts of S3 at 20\,\% are therefore an effect of the weight, not of the mechanism.
-
-\paragraph{Fewer requests, noisier checks.} F1 was the exception. Its first \texttt{error-delta} measurement passed: at 10\,\% the experiment's canary had received only a few requests in its first one-minute window, and few enough of them failed by chance. With \texttt{failureLimit: 1}, two more measurements had to fail, and the release was stopped one interval later than in S3, after 69\,s instead of 47\,s. The slower detection cancelled the lower weight, and F1 reached 32 users, as many as under S3. A lower weight exposes fewer users per second but gives each check fewer samples, which can delay the detection; the second matrix repeated this result (\autoref{sec:EvalTTD}).
-
-\paragraph{The healthy release.} S3w10 promoted F0 without a false alarm, so the relative checks did not become unreliable at the lower traffic. Its duration and pod cost were close to those of S3 (212 against 201\,s, 7.4 against 6.9 pod-minutes), as expected, since the experiment's duration does not depend on its weight.
-
-\paragraph{A measurement defect.} The first evaluation of the F1 run attributed the detection to a background analysis that S3w10 does not have, 5.6 hours before the start. The run was the second release of the same fault settings on the same day, so it had the same pod-template hash, and the failed analysis of the earlier validation trial (\autoref{sec:EvalEnvFaults}) was still stored under a name with the same prefix. The observer now matches the analyses of the current revision only, and the measurement ignores failures from before the start of the release. Re-evaluating all 85 stored timelines changed only this run.
-
-%----------------------------------------------------------------------------
-\section{The second matrix}
+\section{Results}
 \label{sec:EvalResults}
 %----------------------------------------------------------------------------
-The 63 trials of the second matrix ran on 9 and 10 November 2026. The run was interrupted twice, when the VPN connection between the runner and the cluster dropped, and resumed each time from the first trial without a result. One trial (S2 under F5) was discarded and repeated because of a measurement artefact (\autoref{sec:EvalV2Validation}); every other trial ran once and was kept.
+The 63 trials ran on 9 and 10 November 2026. The run was interrupted twice, when the VPN connection between the runner and the cluster dropped, and resumed each time from the first trial without a result. One trial (S2 under F5) was discarded and repeated because of a measurement artefact (\autoref{sec:EvalV2Validation}); every other trial ran once and was kept.
 
 %----------------------------------------------------------------------------
 \subsection{Validation runs}
 \label{sec:EvalV2Validation}
 %----------------------------------------------------------------------------
-Before the matrix, eleven validation runs exercised the new blue-green strategies and the experiment at 10\,\%. Their results were kept apart from the matrix data. Together with the matrix itself they revealed three problems.
+Before the matrix, validation runs exercised the runner, the blue-green strategies and the experiment; their results were kept apart from the matrix data. Together with the matrix itself they revealed three problems.
 
 \paragraph{The pre-promotion analysis counts against the progress deadline.} The first version of the load Job sent requests for 90\,s, so that the last measurement of the analysis would still have a full minute of load in its window. The healthy release under B2 was then aborted by the progress deadline, 121\,s after it started, while the analysis was still running. In a blue-green release, the time spent in the pre-promotion analysis counts towards \texttt{progressDeadlineSeconds}: the pod start-up and the 90\,s of load together exceeded 120\,s. I shortened the load to 60\,s, which still covers the last measurement window, and limited the Job to 90\,s with \texttt{activeDeadlineSeconds}; the repeated run was promoted after 89\,s. The consequence for a real setup is that a longer pre-promotion analysis requires a longer progress deadline, which in turn makes the deadline slower to stop a version that never starts.
 
 \paragraph{Measuring before the last scrape.} One validation run under B0 reported no user requests at all, although the faulty version had served users for several seconds. The release ended only 11\,s after it started, and the runner measured immediately, before Prometheus had scraped the new pods. The runner now waits until the end of the measurement window, 30\,s after the release, plus a margin; measured again, the same run counted 43 user requests, 20 of them failed.
 
-\paragraph{A counter from an earlier release.} The F5 trial under S2 reported a negative number of failed user requests. The matrix had been interrupted the evening before while an earlier F5 release was under way; that release was promoted and served users overnight, with the same pod-template hash as the F5 release of the trial, because the same fault settings give the same pod template. The exact count of \autoref{sec:EvalMeasurements} subtracts the last value of each counter before the window, looked up over five minutes, and the old pod's counters were picked up as the starting value. I discarded the run and repeated it after the matrix; the repetition was promoted with no failed request, as expected. A check of all other timelines showed that no trial started while a pod of its own new version was still running, so no other count was affected.
+\paragraph{A counter from an earlier release.} The F5 trial under S2 reported a negative number of failed user requests. The run had been interrupted the evening before while an earlier F5 release was under way; that release was promoted and served users overnight, with the same pod-template hash as the F5 release of the trial, because the same fault settings give the same pod template. The exact count of \autoref{sec:EvalMeasurements} subtracts the last value of each counter before the window, looked up over five minutes, and the old pod's counters were picked up as the starting value. I discarded the run and repeated it at the end; the repetition was promoted with no failed request, as expected. A check of all other timelines showed that no trial started while a pod of its own new version was still running, so no other count was affected.
 
 %----------------------------------------------------------------------------
 \subsection{Detection}
 \label{sec:EvalDetection}
 %----------------------------------------------------------------------------
-The expected result of every cell follows from the configuration and from the first matrix: S0--S4 should behave as in the first matrix, except that the experiment exposes 10\,\% instead of 20\,\%; B2 should catch what mirroring catches, B1 what the canary catches but at 100\,\%, and B3 should combine the two like S4. F2 should pass every metric check. F6 should be stopped by the progress deadline after about 120\,s.
+Before the first run, I wrote down the expected result of every cell from the configuration alone: mirroring and the pre-promotion analysis should catch the error and latency faults but not the leak, which only checks with a memory metric can see; the experiment, the canary and the post-promotion analysis should catch F1 and F3--F5; F2 should pass every metric check; and F6 should be stopped by the progress deadline after about 120\,s.
 
-\autoref{tab:EvalDetection} shows the results. \textbf{All 54 cells with the faults F0--F5 matched the expectations. F6 did not: the progress deadline fired in only three of the nine strategies}, and in one of them only after 225\,s; \autoref{sec:EvalDeadlineV2} discusses these cells.
+\autoref{tab:EvalDetection} shows the results. \textbf{All 54 cells with the faults F0--F5 matched the expectations. F6 did not: the progress deadline fired in only three of the nine strategies}, and in one of them only after 225\,s; \autoref{sec:EvalDeadline} analyses these cells.
 
 \begin{table}[ht]
 	\scriptsize
@@ -418,7 +274,7 @@ The expected result of every cell follows from the configuration and from the fi
 		\textbf{B3} pre+post & pass & pre · 0\,\% & \miss & pre · 0\,\% & pre · 0\,\% & post · 100\,\% & \textbf{hang} · 0\,\% \\
 		\bottomrule
 	\end{tabular}
-	\caption{Second matrix: the check that stopped the release, and the highest share of users exposed. pre: pre-promotion analysis on the load Job. Other symbols as in \autoref{tab:EvalDetectionV1}.}
+	\caption{The check that stopped the release, and the highest share of users exposed. pass: the healthy version was promoted, as it should be. \miss: not caught, the faulty version reached all users. DL: progress deadline; DL\textsubscript{E}: the experiment's own progress deadline. pre, post: pre- and post-promotion analysis. hang: no check stopped the release.}
 	\label{tab:EvalDetection}
 \end{table}
 
@@ -426,7 +282,7 @@ Some cells deserve a note:
 \begin{itemize}
 	\item \textbf{No false alarms.} All nine healthy releases (F0) were promoted.
 	\item \textbf{The load Job matches mirroring.} B2 and B3 caught exactly the faults that S2 and S4 caught on mirrored traffic, with the same checks, and missed the leak for the same reason: neither has a memory check.
-	\item \textbf{F2 now passes everywhere.} Without the smoke test, no strategy has a check that 2\,\% of errors could fail. Every release of F2 was promoted, with 1--18 failed user requests in the measured window.
+	\item \textbf{F2 passes everywhere.} No strategy has a check that 2\,\% of errors could fail. Every release of F2 was promoted, with 1--18 failed user requests in the measured window.
 	\item \textbf{F5 is passed on to the second check} in the combined strategies: mirroring let it through to the canary in S4, which caught it at 50\,\%, and the pre-promotion analysis let it through to the post-promotion analysis in B3, which caught it with all users switched.
 \end{itemize}
 
@@ -434,7 +290,7 @@ Some cells deserve a note:
 \subsection{Time to detect and to recover}
 \label{sec:EvalTTD}
 %----------------------------------------------------------------------------
-\autoref{tab:EvalTTD} lists the time to detect. The detection times of the first matrix repeated within a few seconds: mirroring caught F1 in 27--30\,s and latency in 47--48\,s, the canary caught errors and latency in 56--59\,s and the leak in 87\,s. The pre-promotion analysis on the load Job, with the same timing as \texttt{mirror-health}, caught the same faults in the same time, 28\,s and 46--49\,s. The post-promotion analysis caught errors and latency in 47--49\,s and the leak in 88\,s, faster than in the first matrix (82--111\,s), because the smoke Job no longer runs first; the time is counted from the first request to the new version, which is now the first user request. The experiment at 10\,\% caught latency in 47--48\,s and the leak in 57\,s, but F1 only after 71\,s, one interval later than at 20\,\%: the same delay as in the follow-up run S3w10 (69\,s), from the same cause, fewer requests per check.
+\autoref{tab:EvalTTD} lists the time to detect. Each mechanism has a characteristic detection time, set by its initial delay, interval and failure limit rather than by the fault. Mirroring caught F1 in 27--30\,s and latency in 47--48\,s, and the pre-promotion analysis on the load Job, with the same timing, caught the same faults in the same time. The canary caught errors and latency in 56--59\,s and the leak in 87\,s, the post-promotion analysis errors and latency in 47--49\,s and the leak in 88\,s. The experiment caught latency in 47--48\,s and the leak in 57\,s, but F1 only after 71\,s, one interval later: at 10\,\% its canary pod had received only a few requests in the first one-minute window, the first measurement of \texttt{error-delta} passed by chance, and with one failure allowed, two more had to fail.
 
 \begin{table}[ht]
 	\footnotesize
@@ -455,13 +311,13 @@ Some cells deserve a note:
 		\textbf{B3} pre+post & 28 & -- & 49 & 46 & 162 & hang \\
 		\bottomrule
 	\end{tabular}
-	\caption{Second matrix: time to detect, in seconds, from the first request of any kind to the new version. --: not detected (promoted). F6 never receives a request, so its column (in parentheses) is measured from the start of the release.}
+	\caption{Time to detect, in seconds, from the first request of any kind to the new version. --: not detected (promoted). F6 never receives a request, so its column (in parentheses) is measured from the start of the release.}
 	\label{tab:EvalTTD}
 \end{table}
 
-In the combined strategies the leak was caught late, after 167\,s in S4 and 162\,s in B3. Most of this is the first check: the time counts from the first mirrored or Job request, and the leak went unnoticed for the 70--75\,s of mirroring or pre-promotion. Measured from the start of the canary or the switch, the second check took as long as on its own. In B3 the memory check of the post-promotion analysis also waits 90\,s, although the new pod has by then been running through the whole pre-promotion phase and has left its start-up allocation behind; the shorter delay of the first matrix (60\,s) would have caught it about 30\,s earlier. The delay is a compromise between B1, where it is needed, and B3, where it is not, because both use the same template.
+In the combined strategies the leak was caught late, after 167\,s in S4 and 162\,s in B3. Most of this is the first check: the time counts from the first mirrored or Job request, and the leak went unnoticed for the 70--75\,s of mirroring or pre-promotion. Measured from the start of the canary or the switch, the second check took as long as on its own. In B3 the memory check of the post-promotion analysis also waits 90\,s, although the new pod has by then been running through the whole pre-promotion phase and has left its start-up allocation behind; a delay of 60\,s would have caught it about 30\,s earlier. The delay is a compromise between B1, where it is needed, and B3, where it is not, because both use the same template.
 
-\autoref{fig:EvalScatter} plots the detected runs by time to detect and exposure. They fall into the same groups as in the first matrix, one per mechanism: mirroring and the pre-promotion analysis at 0\,\%, the experiment and the canary at 10\,\% (the canary at 50\,\% for the leak), and the post-promotion analysis at 100\,\%. Only the checks before the users see the new version detect a fault without exposing anyone, and neither of them caught the leak.
+\autoref{fig:EvalScatter} plots the detected runs by time to detect and exposure. They fall into one group per mechanism: mirroring and the pre-promotion analysis at 0\,\%, the experiment and the canary at 10\,\% (the canary at 50\,\% for the leak), and the post-promotion analysis at 100\,\%. Only the checks before the users see the new version detect a fault without exposing anyone, and neither of them caught the leak.
 
 \begin{figure}[ht]
 	\centering
@@ -487,7 +343,7 @@ In the combined strategies the leak was caught late, after 167\,s in S4 and 162\
 			\addlegendentry{post (bg-post-promotion)}
 		\end{axis}
 	\end{tikzpicture}
-	\caption{Second matrix: detected faults F1--F5 by time to detect and by the highest share of users exposed, one point per run, marked by the check that caught the fault. The points of the pre-promotion analysis (0\,\%) and of the canary (10\,\%) are drawn slightly lower and higher, so that they do not hide the points of mirroring and of the experiment. The points at 162--167\,s are F5 under S4 and B3, counted from the first mirrored or Job request.}
+	\caption{Detected faults F1--F5 by time to detect and by the highest share of users exposed, one point per run, marked by the check that caught the fault. The points of the pre-promotion analysis (0\,\%) and of the canary (10\,\%) are drawn slightly lower and higher, so that they do not hide the points of mirroring and of the experiment. The points at 162--167\,s are F5 under S4 and B3, counted from the first mirrored or Job request.}
 	\label{fig:EvalScatter}
 \end{figure}
 
@@ -518,7 +374,7 @@ Recovery was fast in every case: once a metric check failed, all traffic was bac
 		\textbf{B3} pre+post & 0 & 752/12\textsuperscript{p} & 0 & 0 & 374/0 \\
 		\bottomrule
 	\end{tabular}
-	\caption{Second matrix: user requests served by the faulty version / of these, answered with a 5xx code or slower than 500\,ms. F6 reached no user in any strategy. \textsuperscript{p}: the version was promoted; the count ends 30\,s after the promotion, after which the fault stays with every user until someone notices it. In B1 and B3, the promotion comes only after the post-promotion analysis, so their counts include its 2.5 minutes with all users.}
+	\caption{User requests served by the faulty version / of these, answered with a 5xx code or slower than 500\,ms. F6 reached no user in any strategy. \textsuperscript{p}: the version was promoted; the count ends 30\,s after the promotion, after which the fault stays with every user until someone notices it. In B1 and B3, the promotion comes only after the post-promotion analysis, so their counts include its 2.5 minutes with all users.}
 	\label{tab:EvalImpact}
 \end{table}
 
@@ -528,13 +384,13 @@ Three results deserve attention.
 
 \paragraph{The experiment at 10\,\% is the gentlest check for the leak.} The experiment caught F5 after 28 user requests, against 67 for the canary, because its relative memory check needs no long initial delay: the baseline makes the same start-up allocation as the canary, and the difference cancels it out. For the latency faults it also exposed fewer users than the canary (14 and 16 against 19 and 18), and for F1 about as many (29 against 34) despite its slower detection.
 
-\paragraph{A fault below the thresholds reaches everyone, longest with the most checks.} F2 was promoted by every strategy. The strategies with more checks merely took longer to promote it, so their windows hold more user requests: 752 under B3 against 113 under S0. Only a check of a different kind, such as the smoke test of the first matrix, can catch such a fault before it spreads.
+\paragraph{A fault below the thresholds reaches everyone, longest with the most checks.} F2 was promoted by every strategy. The strategies with more checks merely took longer to promote it, so their windows hold more user requests: 752 under B3 against 113 under S0. Only a check of a different kind, such as a functional test of the answers, could catch such a fault before it spreads.
 
 %----------------------------------------------------------------------------
 \subsection{Cost of a healthy release}
 \label{sec:EvalCost}
 %----------------------------------------------------------------------------
-\autoref{tab:EvalCost} and \autoref{fig:EvalCost} show the cost of the healthy release, which every strategy pays on every release, faulty or not. A check before the users see the new version costs about 1.6 minutes, both as mirroring and as the load Job, and doubles the requests that the new version handles during that time; in a real system this would also double the load on its downstream dependencies. The canary steps and the post-promotion analysis cost 2.3 and 2.8 minutes. The experiment remains the most expensive mechanism, with 3.6 minutes and 7.4 pod-minutes, because of its two extra pods. The combined strategies cost about the sum of their parts: 3.6 minutes for S4 and 4.2 for B3.
+\autoref{tab:EvalCost} and \autoref{fig:EvalCost} show the cost of the healthy release, which every strategy pays on every release, faulty or not. A check before the users see the new version costs about 1.6 minutes, both as mirroring and as the load Job, and doubles the requests that the new version handles during that time; in a real system this would also double the load on its downstream dependencies. The canary steps and the post-promotion analysis cost 2.3 and 2.8 minutes. The experiment is the most expensive mechanism, with 3.6 minutes and 7.4 pod-minutes, because of its two extra pods. The combined strategies cost about the sum of their parts: 3.6 minutes for S4 and 4.2 for B3.
 
 \begin{table}[ht]
 	\footnotesize
@@ -555,7 +411,7 @@ Three results deserve attention.
 		\textbf{B3} pre+post & 249 & 4.2 & 4.2 & 267 Job \\
 		\bottomrule
 	\end{tabular}
-	\caption{Second matrix: cost of a healthy release (F0): time from start to promotion, and the summed lifetime of the pods created during the trial. The old blue-green version, which keeps running for 300\,s after the switch, was created before the trial and is not counted.}
+	\caption{Cost of a healthy release (F0): time from start to promotion, and the summed lifetime of the pods created during the trial. The old blue-green version, which keeps running for 300\,s after the switch, was created before the trial and is not counted.}
 	\label{tab:EvalCost}
 \end{table}
 
@@ -578,7 +434,7 @@ Three results deserve attention.
 			\addlegendentry{pod-minutes}
 		\end{axis}
 	\end{tikzpicture}
-	\caption{Second matrix: duration and pod-minutes of a healthy release per strategy.}
+	\caption{Duration and pod-minutes of a healthy release per strategy.}
 	\label{fig:EvalCost}
 \end{figure}
 
@@ -586,20 +442,14 @@ Three results deserve attention.
 \section{The progress deadline that did not fire}
 \label{sec:EvalDeadline}
 %----------------------------------------------------------------------------
-The progress deadline is the platform's safety net for a version that never starts. In the first matrix it worked in S0--S5 and in BG, but in S6 and S7 the F6 release stayed at step 0 with its pod not Ready, the Rollout reported \emph{Progressing} indefinitely, and nothing happened until the runner aborted it after four minutes. No user was harmed, because a pod that is not Ready receives no traffic. But a release that never ends blocks every later release of the application, and nobody is told: the Rollout does not even become \emph{Degraded}. This section first explains the two hangs of the first matrix and then the six of the second.
-
-%----------------------------------------------------------------------------
-\subsection{Observation}
-\label{sec:EvalDeadlineObservation}
-%----------------------------------------------------------------------------
-The two affected strategies have both mirroring and the experiment; the strategies with only one of them (S2, S3, S4, S5) were not affected. Yet in S6 and S7 the F6 release never got beyond the first step, \texttt{setCanaryScale}, so the steps that differ between the strategies had not even started. The cause therefore had to lie in the state the cluster was in \emph{before} the release, not in the release itself.
-
-The state of the ReplicaSets after the matrix gave the decisive clue. The ReplicaSet of the F5 image, scaled to zero replicas, still carried a \texttt{scale-down-deadline} annotation, with a time 30\,s after the abort of the S7--F5 trial, which ran immediately before S7--F6. The controller adds this annotation when it aborts a release, to keep the canary running for \texttt{abortScaleDownDelaySeconds} (30\,s by default) before scaling it down.
+The progress deadline is the platform's safety net for a version that never starts. It fired under S0 after 120\,s and under B0, but only after 225\,s; under S3, the experiment's own deadline stopped the release after 121\,s. Under S1, S2, S4 and B1--B3, however, the F6 release stayed at its first step with its pod not Ready, the Rollout reported \emph{Progressing} indefinitely, and nothing happened until the runner aborted it after four minutes. No user was harmed, because a pod that is not Ready receives no traffic. But a release that never ends blocks every later release of the application, and nobody is told: the Rollout does not even become \emph{Degraded}.
 
 %----------------------------------------------------------------------------
 \subsection{Root cause}
 \label{sec:EvalDeadlineCause}
 %----------------------------------------------------------------------------
+The hangs occurred in the first step, before any step that differs between the strategies had started, so the cause had to lie in the state the cluster was in \emph{before} the release. After the matrix, both applications had old ReplicaSets with zero replicas and a \texttt{scale-down-deadline} annotation whose time had passed long before: in the canary application the ReplicaSet of F4, in the blue-green application those of F4 and F5. The controller adds this annotation when it aborts a release, to keep the aborted version running for \texttt{abortScaleDownDelaySeconds} (30\,s by default) before scaling it down.
+
 The source code of the controller~\cite{ArgoRolloutsSource} explains how such an annotation disables the deadline. The deadline is evaluated in \texttt{rollout/sync.go}, but only when the following guard is true:
 \begin{lstlisting}[caption={The guard of the progress-deadline check in rollout/sync.go (Argo Rollouts v1.10.1).},label=lst:EvalGuard]
 case !isIndefiniteStep(c.rollout) &&
@@ -608,29 +458,15 @@ case !isIndefiniteStep(c.rollout) &&
 \end{lstlisting}
 The function \texttt{isWaitingForReplicaSetScaleDown} returns true if \emph{any} ReplicaSet of the Rollout, other than the new and the stable one, has a \texttt{scale-down-deadline} annotation. It only checks that the annotation exists, not whether the deadline has passed or whether the ReplicaSet has any replicas left. The intent is reasonable: while an old version is kept running for a delay, the release is not stuck. But a stale annotation keeps the guard false forever, so the deadline is never evaluated.
 
-Three behaviours of the controller combine to leave such a stale annotation behind:
-\begin{enumerate}
-	\item \textbf{The annotation is added even to an empty ReplicaSet.} When a release is aborted, \texttt{reconcileNewReplicaSet} (\texttt{rollout/replicaset.go}) annotates the canary ReplicaSet as soon as the stable version is fully available. It does not check whether the canary has any replicas to keep.
-	\item \textbf{Scaling down during an abort keeps the annotation.} \texttt{scaleReplicaSet} removes the annotation when it scales a ReplicaSet to zero, but not while the Rollout is aborted (\texttt{shouldDelayScaleDownOnAbort} is true).
-	\item \textbf{Empty old ReplicaSets are skipped.} After the reset, the aborted ReplicaSet is an old one. \texttt{scaleDownOldReplicaSetsForCanary} (\texttt{rollout/canary.go}) is where old ReplicaSets lose their annotation, by being scaled to zero; but it skips any ReplicaSet that is already at zero replicas.
-\end{enumerate}
+One path that leaves such a stale annotation behind can be traced in the source code. When a release is aborted, \texttt{reconcileNewReplicaSet} (\texttt{rollout/replicaset.go}) annotates the canary ReplicaSet as soon as the stable version is fully available, even if the canary has no replicas, as during an experiment step, where the experiment runs its own pods. While the Rollout is aborted, \texttt{scaleReplicaSet} does not remove the annotation. After the rollback through Git, the aborted ReplicaSet is an old one, and \texttt{scaleDownOldReplicaSetsForCanary} (\texttt{rollout/canary.go}), which removes the annotation by scaling a ReplicaSet to zero, skips any ReplicaSet that is already at zero. The stale annotations found after the matrix, however, date from aborts during mirroring (F4 under S4) and from blue-green aborts before and after the switch (F4 and F5 under B3), so other paths lead to the same state; I did not trace them. The state behind the earlier hangs was gone after the matrix: the revision history keeps only three old ReplicaSets, and the runner does not record their annotations, so for these cells it cannot be reconstructed which annotation held off the deadline.
 
-Whether a release leaves the annotation behind therefore depends on whether the canary ReplicaSet still has replicas when the release is aborted. In S6 and S7, F5 was caught by the experiment. During the experiment step the Rollout's own canary ReplicaSet is at zero, since the canary weight is zero and the experiment runs its own pods. The abort annotated this empty ReplicaSet. The reset 13--14\,s later cleared the abort, and from then on the ReplicaSet was an old, empty one, which nothing ever touched again. In S1 and S4, by contrast, F5 was caught at 50\,\% with the canary pod running. After the reset this ReplicaSet was an old one \emph{with} a replica, so the controller waited for the deadline, scaled it down and removed the annotation, and the following F6 release behaved normally.
-
-The same mechanism explains every F6 result of the first matrix:
-\begin{itemize}
-	\item \textbf{S3 and S5} had the same stale annotation from F5 (caught by the experiment). But F6 starts with the experiment step in these strategies, and it was stopped by the experiment's own deadline, which is evaluated by the experiment controller and does not consult this guard.
-	\item \textbf{S2} promoted F5, and \textbf{S0} had no aborted release before F6 at all.
-	\item The F1, F3 and F4 ReplicaSets left behind by the experiment in S3 and S5 were cleaned up again before they could matter: the same images were released and aborted by mirroring, with the canary pod running, in S4 and S6.
-	\item \textbf{BG} uses a different Rollout, with its own ReplicaSets.
-\end{itemize}
-Because each fault is always the same image, its ReplicaSet is reused whenever the image is released again, which is how a stale annotation from one trial could reach a later one. Injecting the faults through environment variables (\autoref{sec:EvalEnvFaults}) does not change this: the same settings give the same pod template, and therefore the same ReplicaSet. In a real system every release has a new image, and the stale ReplicaSet disappears only when it falls out of the revision history, which keeps three old ReplicaSets in this platform and ten by default. Until then, \emph{every} release of the Rollout runs without a working progress deadline.
+The same fault settings always give the same pod template, and therefore the same ReplicaSet, so a stale annotation from one trial could reach a later one. In a real system every release has a new version, and the stale ReplicaSet disappears only when it falls out of the revision history, which keeps three old ReplicaSets in this platform and ten by default. Until then, \emph{every} release of the Rollout runs without a working progress deadline.
 
 %----------------------------------------------------------------------------
 \subsection{Confirmation}
 \label{sec:EvalDeadlineConfirmation}
 %----------------------------------------------------------------------------
-The analysis makes a prediction that does not depend on mirroring or the experiment at all: as long as the stale annotation exists, F6 should hang under \emph{any} canary strategy, including S1, where it was aborted after 121\,s in the matrix; and once the annotation is removed, the deadline should fire again. Two additional trials, run on 3 November 2026 with the cluster still in the state the first matrix had left it in, tested this prediction (\autoref{tab:EvalConfirmation}). Their results were kept apart from the matrix data.
+The analysis predicts that the strategy does not matter: as long as a stale annotation exists, F6 should hang under any canary strategy, and once the annotation is removed, the deadline should fire again. Two additional trials under S1, with a stale annotation on an old, empty ReplicaSet, tested this prediction (\autoref{tab:EvalConfirmation}). Their results were kept apart from the matrix data.
 
 \begin{table}[ht]
 	\footnotesize
@@ -647,15 +483,7 @@ The analysis makes a prediction that does not depend on mirroring or the experim
 	\label{tab:EvalConfirmation}
 \end{table}
 
-Both predictions held. The same strategy and the same image behaved in opposite ways depending only on an annotation on an unrelated, empty ReplicaSet, which confirms that the hang in S6 and S7 was caused by the stale annotation left by the preceding F5 trial, not by the strategies themselves.
-
-%----------------------------------------------------------------------------
-\subsection{The second matrix}
-\label{sec:EvalDeadlineV2}
-%----------------------------------------------------------------------------
-In the second matrix, F6 hung under S1, S2 and S4 and under all three blue-green strategies with an analysis, B1--B3. The deadline fired only under S0, after 120\,s, under S3, where the experiment's own deadline stopped the release after 121\,s, as in the first matrix, and under B0, but only after 225\,s.
-
-\paragraph{Stale annotations in both applications.} After the matrix, both applications had old ReplicaSets with zero replicas and a \texttt{scale-down-deadline} that had passed long before: in the canary application the ReplicaSet of F4, and in the blue-green application those of F4 and F5. Their creation times date them to the last trials before the F6 trial of the same strategy: F4 under S4, aborted during mirroring, and F4 and F5 under B3, aborted by the pre- and the post-promotion analysis. Two observations extend the analysis of the first matrix. First, the canary's stale annotation was left by an abort outside an experiment step, during mirroring, with the canary pod running, so the path of \autoref{sec:EvalDeadlineCause} is not the only one. Second, blue-green is affected as well, by aborts before and after the switch. I did not trace these other paths through the source code. The state behind the earlier hangs, under S1, S2, B1 and B2, was gone after the matrix: the revision history keeps only three old ReplicaSets, so those that were old at that time had since been deleted, and later releases of the same faults created them anew. The runner does not record the annotations of the ReplicaSets, so for these cells it cannot be reconstructed which annotation held off the deadline. The outcome, however, is the one predicted by \autoref{sec:EvalDeadlineCause}: as long as any old ReplicaSet carries the annotation, no release of the Rollout has a working progress deadline.
+Both predictions held. The same strategy and the same version behaved in opposite ways depending only on an annotation on an unrelated, empty ReplicaSet.
 
 \paragraph{The deadline waits for the scale-down delay.} The late abort under B0 shows the intended side of the same guard. B0 had promoted the faulty versions F1--F5, each followed by a reset, which is a promotion as well, so each of them became an old version that blue-green keeps running for its \texttt{scaleDownDelaySeconds} of 300\,s. When F6 started, the old versions of F4 and F5 were still running, so \texttt{isWaitingForReplicaSetScaleDown} was true, and the deadline was not evaluated until they had been scaled down; it fired after 225\,s instead of 120\,s. This is not a defect: an old version kept on purpose is a reason to wait. But with a long scale-down delay, which blue-green needs for an instant rollback, a version that never starts is stopped only after the previous one has been scaled down, which can be up to that delay later.
 
@@ -663,7 +491,7 @@ In the second matrix, F6 hung under S1, S2 and S4 and under all three blue-green
 \subsection{Relation to known issues and consequences}
 \label{sec:EvalDeadlineKnown}
 %----------------------------------------------------------------------------
-The suppression itself is a known problem. Issue \#4971 of Argo Rollouts~\cite{ArgoRolloutsIssue4971}, opened in August 2026, describes the same guard being kept false by a stale annotation on an orphaned ReplicaSet, which also makes the controller re-queue the Rollout in a tight loop. The pull request proposed to fix it~\cite{ArgoRolloutsPR4972} makes \texttt{isWaitingForReplicaSetScaleDown} ignore deadlines that have already passed; it had not been merged at the time of writing, so v1.10.1 is affected. The issue reproduces the stale annotation differently: the aborted release is left in the aborted state until its scale-down delay expires. The experiments of this work show more ordinary paths to the same state, which need no waiting at all: an aborted release followed by a rollback through Git, in an experiment step, in other canary steps and in blue-green. A GitOps rollback is the standard reaction to an aborted release, so this state is likely to occur in practice. The proposed fix would also resolve these cases, since it ignores every deadline in the past, whatever left it behind.
+The suppression itself is a known problem. Issue \#4971 of Argo Rollouts~\cite{ArgoRolloutsIssue4971}, opened in August 2026, describes the same guard being kept false by a stale annotation on an orphaned ReplicaSet, which also makes the controller re-queue the Rollout in a tight loop. The pull request proposed to fix it~\cite{ArgoRolloutsPR4972} makes \texttt{isWaitingForReplicaSetScaleDown} ignore deadlines that have already passed; it had not been merged at the time of writing, so v1.10.1 is affected. The issue reproduces the stale annotation differently: the aborted release is left in the aborted state until its scale-down delay expires. The experiments of this work show more ordinary paths to the same state, which need no waiting at all: an aborted release followed by a rollback through Git, during mirroring, in an experiment step and in blue-green. A GitOps rollback is the standard reaction to an aborted release, so this state is likely to occur in practice. The proposed fix would also resolve these cases, since it ignores every deadline in the past, whatever left it behind.
 
 The consequences for the platform are as follows:
 \begin{itemize}
@@ -678,22 +506,21 @@ The consequences for the platform are as follows:
 \label{sec:EvalDiscussion}
 %----------------------------------------------------------------------------
 
-\paragraph{RQ1: which mechanism catches what.} Each mechanism has a clear profile, which both matrices reproduced within a few seconds. The checks before the users see the new version, mirroring in a canary and the pre-promotion analysis on a load Job in blue-green, catch errors and latency fastest (in 27--49\,s) and without exposing any user, but they are blind to slow faults such as the leak, because their window is short and they measure no memory. The experiment catches every metric fault, the leak included, in 47--71\,s, at the share of users given to its templates. The canary also catches every metric fault, but the leak only late and at 50\,\%. The post-promotion analysis catches the same faults as the canary in about the same time, with every user exposed. None of the metric-based checks can catch a fault below its threshold (F2) or a fault that the metrics do not describe (F8); only the smoke test of the first matrix, which checks the content of the answers, caught F8, and it caught F2 only by chance.
+\paragraph{RQ1: which mechanism catches what.} Each mechanism has a clear profile. The checks before the users see the new version, mirroring in a canary and the pre-promotion analysis on a load Job in blue-green, catch errors and latency fastest (in 27--49\,s) and without exposing any user, but they are blind to slow faults such as the leak, because their window is short and they measure no memory. The experiment catches every metric fault, the leak included, in 47--71\,s, at the share of users given to its templates. The canary also catches every metric fault, but the leak only late and at 50\,\%. The post-promotion analysis catches the same faults as the canary in about the same time, with every user exposed. None of the metric checks can catch a fault below its threshold (F2).
 
-\paragraph{RQ2: the cost.} Protection is paid for in time and resources on every release, and the healthy release shows the price. A check before the users costs about 1.6 minutes, the canary steps 2.3 and the post-promotion analysis 2.8 minutes; the combinations cost about the sum of their parts, 3.6 minutes for S4 and 4.2 for B3. The experiment costs the most, 3.6 minutes and more than three times the pod-minutes of the canary, and in the first matrix the full combination of all three mechanisms took 6.8 minutes and 12.7 pod-minutes. In exposure the cost is fault-specific: a check before the users reduced the users exposed to loud faults to zero, a check after the switch raised it to everyone, and no metric check reduced the exposure to F2.
+\paragraph{RQ2: the cost.} Protection is paid for in time and resources on every release, and the healthy release shows the price. A check before the users costs about 1.6 minutes, the canary steps 2.3 and the post-promotion analysis 2.8 minutes; the combinations cost about the sum of their parts, 3.6 minutes for S4 and 4.2 for B3. The experiment costs the most, 3.6 minutes and more than three times the pod-minutes of the canary. In exposure the cost is fault-specific: a check before the users reduced the users exposed to loud faults to zero, a check after the switch raised it to everyone, and no metric check reduced the exposure to F2.
 
-\paragraph{RQ3: absolute or relative checks.} In these experiments neither approach produced a false alarm, and both caught the same faults: the relative check was not better at avoiding misses. The difference was in timing and exposure. Because a fresh baseline makes the same start-up allocation as the canary, the relative memory check can start without the long delay of the absolute one, and caught the leak after 28 user requests at 10\,\%, against 67 at up to 50\,\% for the canary. Its weakness is the number of samples: at 10\,\%, its error check needed one interval more than at 20\,\%, in both runs that tested it. The real advantage of relative analysis, robustness against changes of the environment that affect both versions, could not be shown, because environment faults were out of scope. A relative check also has a blind spot of its own: if both versions are bad, for example because of a broken dependency, their difference is small. The absolute checks should therefore stay as a floor.
+\paragraph{RQ3: absolute or relative checks.} In these experiments neither approach produced a false alarm, and both caught the same faults: the relative check was not better at avoiding misses. The difference was in timing and exposure. Because a fresh baseline makes the same start-up allocation as the canary, the relative memory check can start without the long delay of the absolute one, and caught the leak after 28 user requests at 10\,\%, against 67 at up to 50\,\% for the canary. Its weakness is the number of samples: at 10\,\%, a single measurement sees only a few requests, and its error check needed one interval more than its latency check. The real advantage of relative analysis, robustness against changes of the environment that affect both versions, could not be shown, because environment faults were out of scope. A relative check also has a blind spot of its own: if both versions are bad, for example because of a broken dependency, their difference is small. The absolute checks should therefore stay as a floor.
 
-\paragraph{RQ4: combinations.} Combining mechanisms helps only where a later mechanism catches what an earlier one misses. Mirroring before the canary (S4) moved the loud faults from 10\,\% to 0\,\% exposure and left the leak to the canary, at a cost of about 1.3 minutes per release over the canary alone; the pre-promotion analysis before the post-promotion one (B3) did the same for blue-green, moving the loud faults from 100\,\% to 0\,\%. Combinations whose parts catch the same faults only add time: in the first matrix, the canary after the experiment (S5, S7) changed no outcome, and the experiment before the canary made the loud faults worse at 20\,\%. A combination also delays its second check: the leak, which the second check of S4 and B3 catches, was caught about 70\,s later, counted from the start of the release, than by the same check on its own.
+\paragraph{RQ4: combinations.} Combining mechanisms helps where a later mechanism catches what an earlier one misses. Mirroring before the canary (S4) moved the loud faults from 10\,\% to 0\,\% exposure and left the leak to the canary, at a cost of about 1.3 minutes per release over the canary alone; the pre-promotion analysis before the post-promotion one (B3) did the same for blue-green, moving the loud faults from 100\,\% to 0\,\%. A combination also delays its second check: the leak, which the second check of S4 and B3 catches, was caught about 70\,s later, counted from the start of the release, than by the same check on its own. Mechanisms that catch the same faults, such as the experiment and the canary, would only add time to each other, which is why they were not combined.
 
-\paragraph{RQ5: blue-green.} Blue-green inverts the risk profile of the canary. Before the switch it exposes nobody, and with generated load the same metric checks as mirroring catch the same faults in the same time (B2 against S2). After the switch every user is exposed, so whatever the checks before the switch miss reaches all users at once: the post-promotion analysis caught the leak after 371 user requests, against 119 in the canary of S4. Without a check before the switch (B1), even the loud faults reached everyone, with six times as many failed requests as under the canary. Its rollback was as fast as the canary's, because the old version keeps running. Blue-green is therefore attractive where a meaningful check before the switch exists, either generated load for the metrics or a functional test, and weak against faults that appear only after some time under real load. Two properties of the blue-green strategy matter for its configuration: the pre-promotion analysis counts against the progress deadline, so a longer analysis needs a longer deadline, and the scale-down delay that makes the rollback instant also delays the deadline of the next release.
+\paragraph{RQ5: blue-green.} Blue-green inverts the risk profile of the canary. Before the switch it exposes nobody, and with generated load the same metric checks as mirroring catch the same faults in the same time (B2 against S2). After the switch every user is exposed, so whatever the checks before the switch miss reaches all users at once: the post-promotion analysis caught the leak after 371 user requests, against 119 in the canary of S4. Without a check before the switch (B1), even the loud faults reached everyone, with six times as many failed requests as under the canary. Its rollback was as fast as the canary's, because the old version keeps running. Blue-green is therefore attractive where a meaningful check before the switch exists, and weak against faults that appear only after some time under real load. Two properties of the blue-green strategy matter for its configuration: the pre-promotion analysis counts against the progress deadline, so a longer analysis needs a longer deadline, and the scale-down delay that makes the rollback instant also delays the deadline of the next release.
 
-\paragraph{Defence in depth and a decision guide.} No single mechanism caught every fault, and the strategies that combine complementary mechanisms (a check before the users for loud faults, a check under real traffic or a relative check for slow ones, a functional test for semantic ones) caught the most with the least exposure. The results suggest the following choices:
+\paragraph{Defence in depth and a decision guide.} No single mechanism caught every fault, and the strategies that combine complementary mechanisms (a check before the users for loud faults, and a check under real traffic or a relative check for slow ones) caught the most with the least exposure. The results suggest the following choices:
 \begin{itemize}
 	\item a service whose users must not see errors: a check before the users, mirroring before the canary (S4) or a load Job before a blue-green switch (B3);
 	\item slow faults expected: a canary or an experiment at a small weight, which catch the leak before most users see it; in blue-green, only the post-promotion analysis sees it, with every user;
 	\item limited resources or frequent releases: the canary alone (S1);
-	\item faults that the metrics cannot see: a functional check, such as the smoke test, which can run before a blue-green switch or as an analysis step of a canary;
 	\item in every case: an alert on releases that stay \emph{Progressing} too long, because the progress deadline cannot be relied on alone (\autoref{sec:EvalDeadline}).
 \end{itemize}
 
@@ -701,10 +528,10 @@ The consequences for the platform are as follows:
 \section{Threats to validity}
 \label{sec:EvalThreats}
 %----------------------------------------------------------------------------
-\paragraph{Internal validity.} Each cell was run once in each matrix. Most outcomes follow from the configuration (thresholds, delays, step order) and are expected to repeat, which the second matrix supports: apart from F6, every cell of the first matrix that was run again with the same mechanism gave the same outcome, with detection times within a few seconds. The random outcomes rest on few samples: F2 under the smoke test, caught with a probability of about 64\,\%, and the slower detection of F1 by the experiment at 10\,\%, seen in two runs. The trials ran one after the other on the same cluster, and state can leak from one trial into the next, because the same fault settings always give the same ReplicaSet. This caused the hangs of \autoref{sec:EvalDeadline} and the discarded run of \autoref{sec:EvalV2Validation}; I checked that no other trial started while a pod of its new version was still running. The metric checks query only the pods of the new version, so the other results do not depend on such state. The measurement defects found after the first matrix and before the second affected only the computation of the measurements, which was repeated from the recorded timelines while Prometheus still held the data.
+\paragraph{Internal validity.} Each cell was run once. Most outcomes follow from the configuration (thresholds, delays, step order) and are expected to repeat. The random outcomes rest on few samples, such as the slower detection of F1 by the experiment at 10\,\%, seen in one run. The trials ran one after the other on the same cluster, and state can leak from one trial into the next, because the same fault settings always give the same ReplicaSet. This caused the hangs of \autoref{sec:EvalDeadline} and the discarded run of \autoref{sec:EvalV2Validation}; I checked that no other trial started while a pod of its new version was still running. The metric checks query only the pods of the new version, so the other results do not depend on such state.
 
 \paragraph{Measurement resolution.} Prometheus scrapes every 10\,s and the checks use one-minute rate windows, so detection times below about 30\,s are not resolved precisely, and the runner's 2\,s polling bounds the resolution of the recovery time. The latency checks overestimate the p95 by up to the width of a histogram bucket (\autoref{sec:EvalMetricValidation}); this made no difference for the faults tested, whose latencies are far above the threshold, but it would for faults close to it.
 
-\paragraph{External validity.} The environment is small: a single node, one replica per version, and synthetic traffic of about 5 requests per second to a single endpoint. With a few requests per measurement window, the checks have little statistical power, and the thresholds were chosen for this application. The load Job sends the same request as the load generator, so in this setup it is as representative as mirrored traffic; a real service would need a load script that represents its real requests. The faults are deterministic and present from the start, unlike many real faults, which depend on input or appear only under load. Environment faults, where relative analysis is expected to excel, were not tested, and neither were other orders of the mechanisms, such as an experiment after the first canary step. The cluster is a single-node k3s, without high availability and with simpler networking and load balancing than a cloud cluster; the rollback logic does not depend on these layers, but node failures and the rescheduling of pods during a release were not part of the evaluation.
+\paragraph{External validity.} The environment is small: a single node, one replica per version, and synthetic traffic of about 5 requests per second to a single endpoint. With a few requests per measurement window, the checks have little statistical power, and the thresholds were chosen for this application. The load Job sends the same request as the load generator, so in this setup it is as representative as mirrored traffic; a real service would need a load script that represents its real requests. The faults are deterministic and present from the start, unlike many real faults, which depend on input or appear only under load, and faults that do not show in the request metrics, such as wrong answers, were not tested. Environment faults, where relative analysis is expected to excel, were not tested either, and neither were other orders of the mechanisms, such as an experiment after the first canary step. The cluster is a single-node k3s, without high availability and with simpler networking and load balancing than a cloud cluster; the rollback logic does not depend on these layers, but node failures and the rescheduling of pods during a release were not part of the evaluation.
 
-\paragraph{Future work.} The experiments point to several extensions: the smoke test as a second part of the pre-promotion analysis, next to the load Job, and with it the semantic fault F8; statistical canary analysis, which compares canary and baseline with a statistical test instead of fixed thresholds, as Kayenta does~\cite{Kayenta}; the experiment after the first canary step; a shorter memory delay for the post-promotion analysis when a pre-promotion phase precedes it; an exact latency check on a bucket boundary (\autoref{sec:EvalMetricValidation}); recording the annotations of the ReplicaSets in the runner's snapshots, to attribute every suppressed deadline; environment faults; multiple replicas and nodes; a separate production environment, which Argo CD would deploy from a second Git branch after a release has passed the development environment; and repeated runs of every cell.
+\paragraph{Future work.} The experiments point to several extensions: a functional test of the answers before the switch, next to the load Job, for faults that the metrics cannot see; statistical canary analysis, which compares canary and baseline with a statistical test instead of fixed thresholds, as Kayenta does~\cite{Kayenta}; the experiment after the first canary step; a shorter memory delay for the post-promotion analysis when a pre-promotion phase precedes it; an exact latency check on a bucket boundary (\autoref{sec:EvalMetricValidation}); recording the annotations of the ReplicaSets in the runner's snapshots, to attribute every suppressed deadline; environment faults; multiple replicas and nodes; a separate production environment, which Argo CD would deploy from a second Git branch after a release has passed the development environment; and repeated runs of every cell.
