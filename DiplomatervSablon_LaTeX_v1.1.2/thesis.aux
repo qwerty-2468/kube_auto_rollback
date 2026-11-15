@@ -5,21 +5,19 @@
 \providecommand*\HyPL@Entry[1]{}
 \catcode \string ``=12
 \bibstyle{unsrtnat}
-\@input{include/guideline.aux}
-\HyPL@Entry{0<</P()>>}
-\@input{include/project.aux}
 \@input{include/titlepage.aux}
-\HyPL@Entry{2<</P()>>}
-\HyPL@Entry{3<</P()>>}
+\HyPL@Entry{0<</P()>>}
+\HyPL@Entry{1<</P()>>}
 \@input{include/declaration_EN.aux}
-\HyPL@Entry{5<</P()>>}
+\HyPL@Entry{4<</P()>>}
 \@input{content/abstract.aux}
-\HyPL@Entry{6<</S/r>>}
+\HyPL@Entry{5<</S/r>>}
 \@input{content/introduction.aux}
-\HyPL@Entry{8<</S/D>>}
+\HyPL@Entry{7<</S/D>>}
 \@input{content/background.aux}
+\@input{content/design.aux}
+\@input{content/implementation.aux}
 \@input{content/evaluation.aux}
-\@input{content/latex-tools.aux}
 \@input{content/thesis-format.aux}
 \@input{content/template-usage.aux}
 \@input{content/acknowledgement.aux}
@@ -30,28 +28,56 @@
 \bibcite{ArgoRollouts}{{4}{2026{}}{{The Argo Project Authors}}{{}}}
 \bibcite{IstioVirtualService}{{5}{2026{}}{{Istio Authors}}{{}}}
 \bibcite{PromQL}{{6}{2026{}}{{Prometheus Authors}}{{}}}
-\bibcite{ArgoCD}{{7}{2026{}}{{The Argo Project Authors}}{{}}}
-\bibcite{ArgoRolloutsExperiment}{{8}{2026{}}{{The Argo Project Authors}}{{}}}
-\bibcite{ArgoRolloutsBlueGreen}{{9}{2026{}}{{The Argo Project Authors}}{{}}}
-\bibcite{ArgoRolloutsJob}{{10}{2026{}}{{The Argo Project Authors}}{{}}}
-\bibcite{K8sSidecar}{{11}{2026{}}{{The Kubernetes Authors}}{{}}}
-\bibcite{ArgoRolloutsSpec}{{12}{2026{}}{{The Argo Project Authors}}{{}}}
-\@writefile{toc}{\select@language{english} \contentsline {chapter}{Bibliography}{36}{chapter*.40}\protected@file@percent }
-\bibcite{Montgomery17}{{13}{2017}{{Montgomery}}{{}}}
-\bibcite{KustomizeComponents}{{14}{2026{}}{{The Kubernetes Authors}}{{}}}
-\bibcite{IstioMetrics}{{15}{2026{}}{{Istio Authors}}{{}}}
-\bibcite{PromHistograms}{{16}{2026{}}{{Prometheus Authors}}{{}}}
-\bibcite{ArgoRolloutsSource}{{17}{2026{}}{{The Argo Project Authors}}{{}}}
-\bibcite{ArgoRolloutsIssue4971}{{18}{2026}{{GitHub user report}}{{}}}
-\bibcite{ArgoRolloutsPR4972}{{19}{2026}{{GitHub user contribution}}{{}}}
-\bibcite{Kayenta}{{20}{2026}{{Spinnaker Authors}}{{}}}
-\bibcite{Jeney}{{21}{2014}{{Jeney}}{{}}}
-\bibcite{Wettl04}{{22}{2004}{{Wettl et~al.}}{{Wettl, Mayer, and Szabó}}}
-\bibcite{Candy86}{{23}{1986}{{Candy}}{{}}}
-\bibcite{Lee87}{{24}{1987}{{Lee and Sodini}}{{}}}
-\bibcite{KissPhD}{{25}{2000}{{Kiss}}{{}}}
-\bibcite{Schreier00}{{26}{2000}{{Schreier}}{{}}}
-\bibcite{Mkrtychev:1997}{{27}{1997}{{Mkrtychev}}{{}}}
-\bibcite{DipPortal}{{28}{}{{Budapesti Műszaki és Gazdaságtudományi Egyetem Villamosmérnöki és Informatikai Kar}}{{}}}
+\bibcite{IstioMetrics}{{7}{2026{}}{{Istio Authors}}{{}}}
+\bibcite{ArgoRolloutsAnalysis}{{8}{2026{}}{{The Argo Project Authors}}{{}}}
+\bibcite{PromHistograms}{{9}{2026{}}{{Prometheus Authors}}{{}}}
+\bibcite{IstioAccessLogs}{{10}{2026{}}{{Istio Authors}}{{}}}
+\bibcite{OpenGitOps}{{11}{2026}{{OpenGitOps}}{{}}}
+\bibcite{K3s}{{12}{2026{}}{{K3s Project Authors}}{{}}}
+\bibcite{K3sAnsible}{{13}{2026{}}{{K3s Project Authors}}{{}}}
+\@writefile{toc}{\select@language{english} \contentsline {chapter}{Bibliography}{65}{chapter*.112}\protected@file@percent }
+\bibcite{K3sServiceLB}{{14}{2026{}}{{K3s Project Authors}}{{}}}
+\bibcite{ArgoRolloutsIstio}{{15}{2026{}}{{The Argo Project Authors}}{{}}}
+\bibcite{IstioPeerAuth}{{16}{2026{}}{{Istio Authors}}{{}}}
+\bibcite{IstioDataplaneModes}{{17}{2026{}}{{Istio Authors}}{{}}}
+\bibcite{IstioWaypoint}{{18}{2026{}}{{Istio Authors}}{{}}}
+\bibcite{CertManagerCA}{{19}{2026}{{The cert-manager Authors}}{{}}}
+\bibcite{SOPS}{{20}{2026}{{SOPS Authors}}{{}}}
+\bibcite{Flagger}{{21}{2026{}}{{Flagger Authors}}{{}}}
+\bibcite{ArgoCD}{{22}{2026{}}{{The Argo Project Authors}}{{}}}
+\bibcite{ArgoRolloutsCanary}{{23}{2026{}}{{The Argo Project Authors}}{{}}}
+\bibcite{FlaggerStrategies}{{24}{2026{}}{{Flagger Authors}}{{}}}
+\bibcite{ArgoRolloutsExperiment}{{25}{2026{}}{{The Argo Project Authors}}{{}}}
+\bibcite{FlaggerHowItWorks}{{26}{2026{}}{{Flagger Authors}}{{}}}
+\bibcite{FlaggerWebhooks}{{27}{2026{}}{{Flagger Authors}}{{}}}
+\bibcite{ArgoRolloutsSpec}{{28}{2026{}}{{The Argo Project Authors}}{{}}}
+\bibcite{IstioMirroring}{{29}{2026{}}{{Istio Authors}}{{}}}
+\bibcite{ArgoRolloutsTraffic}{{30}{2026{}}{{The Argo Project Authors}}{{}}}
+\bibcite{ArgoRolloutsBlueGreen}{{31}{2026{}}{{The Argo Project Authors}}{{}}}
+\bibcite{ArgoRolloutsJob}{{32}{2026{}}{{The Argo Project Authors}}{{}}}
+\bibcite{K8sSidecar}{{33}{2026{}}{{The Kubernetes Authors}}{{}}}
+\bibcite{Diffy}{{34}{2026}{{Opendiffy contributors}}{{}}}
+\bibcite{Kayenta}{{35}{2026}{{Spinnaker Authors}}{{}}}
+\bibcite{ArgoCDBootstrap}{{36}{2026{}}{{The Argo Project Authors}}{{}}}
+\bibcite{ArgoCDSyncWaves}{{37}{2026{}}{{The Argo Project Authors}}{{}}}
+\bibcite{ArgoCDMultiSource}{{38}{2026{}}{{The Argo Project Authors}}{{}}}
+\bibcite{ArgoCDDiffing}{{39}{2026{}}{{The Argo Project Authors}}{{}}}
+\bibcite{NetBirdNetworks}{{40}{2026}{{NetBird}}{{}}}
+\bibcite{PromConfig}{{41}{2026{}}{{Prometheus Authors}}{{}}}
+\bibcite{Montgomery17}{{42}{2017}{{Montgomery}}{{}}}
+\bibcite{KustomizeComponents}{{43}{2026{}}{{The Kubernetes Authors}}{{}}}
+\bibcite{KustomizePatches}{{44}{2026{}}{{The Kubernetes Authors}}{{}}}
+\bibcite{TwelveFactorConfig}{{45}{2017}{{Wiggins}}{{}}}
+\bibcite{ArgoRolloutsSource}{{46}{2026{}}{{The Argo Project Authors}}{{}}}
+\bibcite{ArgoRolloutsIssue4971}{{47}{2026}{{GitHub user report}}{{}}}
+\bibcite{ArgoRolloutsPR4972}{{48}{2026}{{GitHub user contribution}}{{}}}
+\bibcite{Jeney}{{49}{2014}{{Jeney}}{{}}}
+\bibcite{Wettl04}{{50}{2004}{{Wettl et~al.}}{{Wettl, Mayer, and Szabó}}}
+\bibcite{Candy86}{{51}{1986}{{Candy}}{{}}}
+\bibcite{Lee87}{{52}{1987}{{Lee and Sodini}}{{}}}
+\bibcite{KissPhD}{{53}{2000}{{Kiss}}{{}}}
+\bibcite{Schreier00}{{54}{2000}{{Schreier}}{{}}}
+\bibcite{Mkrtychev:1997}{{55}{1997}{{Mkrtychev}}{{}}}
+\bibcite{DipPortal}{{56}{}{{Budapesti Műszaki és Gazdaságtudományi Egyetem Villamosmérnöki és Informatikai Kar}}{{}}}
 \@input{content/appendices.aux}
-\gdef \@abspage@last{50}
+\gdef \@abspage@last{80}
