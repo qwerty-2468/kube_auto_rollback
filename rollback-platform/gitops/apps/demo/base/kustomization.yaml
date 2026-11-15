@@ -12,8 +12,7 @@ resources:
 patches:
   - path: release.yaml
     target: { kind: Rollout, name: demo }
-# The demo repo's CI rewrites newTag on every code release. It lives in base, so
-# dev (main) picks it up at once and prod gets it when main is pushed to release.
+# The demo repo's CI rewrites newTag on every code release; Argo CD (main) picks it up.
 images:
   - name: demo-app
     newName: prgdlv-auto.netbird.cloud:3000/admin/demo

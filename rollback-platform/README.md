@@ -1,15 +1,15 @@
 # rollback-platform
 
-Two separate single-node k3s clusters (dev, prod) where a bad release is detected
-from Istio traffic metrics and rolled back automatically by Argo Rollouts.
+A single-node k3s cluster (dev) where a bad release is detected from Istio traffic
+metrics and rolled back automatically by Argo Rollouts.
 Design: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 | Env  | VM                        | Domain            | Git ref   |
 |------|---------------------------|-------------------|-----------|
 | dev  | prgdlv-test.netbird.cloud | `*.dev.internal`  | `main`    |
-| prod | prgdlv-auto.netbird.cloud | `*.prod.internal` | `release` |
 
-Git remote (what Argo CD pulls): `http://100.83.93.156:3000/admin/rollback-platform.git`
+Git remote (what Argo CD pulls): `http://100.83.93.156:3000/admin/rollback-platform.git`,
+on Gitea on prgdlv-auto, which also runs the registry and the CI runner but no cluster.
 
 ## Control machine prerequisites
 
@@ -29,12 +29,6 @@ kubectl --context k3s-dev -n argocd get applications
 
 Ansible installs k3s, creates the root CA secret, installs Argo CD and applies the root
 Application for `gitops/clusters/<env>/`. Argo CD does everything else.
-
-## Promote to prod
-
-```sh
-git push origin main:release
-```
 
 ## Secrets
 
