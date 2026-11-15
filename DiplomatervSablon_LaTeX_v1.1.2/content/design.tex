@@ -37,13 +37,13 @@ The goal of the platform is that a faulty release is detected from the behaviour
 
 R1--R4 describe the rollback itself and pull in different directions. Exposing fewer users (R2) means less traffic on the new version, which makes its metrics noisier and either slower to judge (R3) or more prone to false alarms (R4). Finding a good balance between them, and measuring it, is the subject of the experiments in \autoref{sec:Evaluation}. R5--R8 constrain how the platform is built.
 
-Two limits of the scope follow from the same goal. First, the platform protects against faulty \emph{releases}, not against the loss of a machine: each environment is a single node, without high availability, and a lost VM is rebuilt from code (R6). Second, only faults that are part of the release are considered. The faults of the environment were left out by decision, such as a node under CPU pressure, to keep the experiments focused on the question of when a new version should be rolled back.
+Two limits of the scope follow from the same goal. First, the platform protects against faulty \emph{releases}, not against the loss of a machine: the cluster is a single node, without high availability, and a lost VM is rebuilt from code (R6). Second, only faults that are part of the release are considered. The faults of the environment were left out by decision, such as a node under CPU pressure, to keep the experiments focused on the question of when a new version should be rolled back.
 
 %----------------------------------------------------------------------------
 \section{Architecture overview}
 \label{sec:DesignOverview}
 %----------------------------------------------------------------------------
-\autoref{fig:DesignOverview} shows the system an environment. It spans three places. The \emph{control machine}, runs the provisioning tools and the trial runner. A second VM, \texttt{prgdlv-auto}, hosts the Git server Gitea together with its container registry and its CI runner, which I set up as host services outside any cluster. The cluster itself runs on \texttt{prgdlv-test}. All three are connected by the NetBird overlay VPN, through which the platform and its user interfaces are reached by name.
+\autoref{fig:DesignOverview} shows the system. It spans three places. The \emph{control machine}, runs the provisioning tools and the trial runner. A second VM, \texttt{prgdlv-auto}, hosts the Git server Gitea together with its container registry and its CI runner, which I set up as host services outside any cluster. The cluster itself runs on \texttt{prgdlv-test}. All three are connected by the NetBird overlay VPN, through which the platform and its user interfaces are reached by name.
 
 \begin{figure}[ht]
 	\centering
@@ -81,7 +81,7 @@ Two limits of the scope follow from the same goal. First, the platform protects 
 		\draw[arr] (dash) -- node[lbl, above]{queries} (prom);
 		\draw[arr] (prom.south) -- ++(0,-0.7) -| node[lbl, above, pos=0.25]{scrapes sidecars and cAdvisor (pull)} (demo.south);
 	\end{tikzpicture}}
-	\caption{Overview of the platform for the development environment. Images are pulled from the registry on \texttt{prgdlv-auto}; this is not drawn.}
+	\caption{Overview of the platform. Images are pulled from the registry on \texttt{prgdlv-auto}; this is not drawn.}
 	\label{fig:DesignOverview}
 \end{figure}
 
@@ -279,7 +279,7 @@ The checks above are \emph{absolute}: they compare the new version with fixed th
 
 The AnalysisTemplate \texttt{canary-vs-baseline} checks three differences every 20\,s: of the 5xx share (at most 5 percentage points), of the 95th percentile latency (at most 100\,ms) and of the memory growth (at most 0.05\,MiB/s). Latency is compared as a difference, not as a ratio, because the application answers in a few milliseconds, and a ratio would report 7\,ms against 4\,ms as a 75\,\% regression. The memory series come from the kubelet's cAdvisor, which carries no pod labels, and without kube-state-metrics there is no way to join them with the pod-template hash; the memory check therefore selects the two pods by the names the experiment gives them.
 
-Each experiment pod receives 10\,\% of the users, the same share as the first canary step. In production every request comes from a real user, and a larger experiment weight would show the new version to more users than the first canary step would.
+Each experiment pod receives 10\,\% of the users, the same share as the first canary step. In real use every request comes from a real user, and a larger experiment weight would show the new version to more users than the first canary step would.
 
 The experiment is not part of the default release. In the first experiments it ran between mirroring and the canary steps, but it catches the same faults as the canary steps, so the canary after it changed no outcome and only added time, and it is the most expensive mechanism, at about three minutes and two extra pods per release (\autoref{sec:EvalFirstMatrix}). It remains available as a strategy of its own, the relative alternative to the canary steps.
 

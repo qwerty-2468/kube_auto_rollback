@@ -8,3 +8,17 @@ trash/
 *.code-workspace
 *.pyc
 .git/
+# LaTeX build output (thesis.pdf stays tracked)
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.out
+*.synctex.gz
+*.thm
+*.toc
+*.xdv
+*.lof
+*.lot
+*.lol

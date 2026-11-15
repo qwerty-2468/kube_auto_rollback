@@ -10,7 +10,7 @@ This chapter describes how the design of \autoref{sec:Design} became a working s
 \section{Environment and tools}
 \label{sec:ImplEnvironment}
 %----------------------------------------------------------------------------
-The platform runs on two virtual machines with 8\,GB of memory and 4 CPU cores each, both with Ubuntu 24.04, reachable over SSH and connected to the control machine by the NetBird VPN. \texttt{prgdlv-test} runs the development cluster. \texttt{prgdlv-auto} runs Gitea with its container registry and an \texttt{act\_runner} CI runner as host services. The control machine, a laptop on the same VPN, runs ansible-core, \texttt{kubectl}, Helm, SOPS and age, and the Python standard library is the only dependency of the trial runner. Only SSH access with \texttt{sudo} and a running NetBird client are prepared on the VMs by hand; everything else is installed by the bootstrap.
+The platform runs on two virtual machines with 8\,GB of memory and 4 CPU cores each, both with Ubuntu 24.04, reachable over SSH and connected to the control machine by the NetBird VPN. \texttt{prgdlv-test} runs the cluster. \texttt{prgdlv-auto} runs Gitea with its container registry and an \texttt{act\_runner} CI runner as host services. The control machine, a laptop on the same VPN, runs ansible-core, \texttt{kubectl}, Helm, SOPS and age, and the Python standard library is the only dependency of the trial runner. Only SSH access with \texttt{sudo} and a running NetBird client are prepared on the VMs by hand; everything else is installed by the bootstrap.
 
 Every component is pinned to an exact version (\autoref{tab:ImplVersions}), in the Ansible requirements and in the Argo CD Applications. An environment rebuilt months later therefore gets the same software as the one it replaces (R6), and the results of the experiments refer to known versions, which turned out to matter.
 
@@ -36,7 +36,7 @@ Every component is pinned to an exact version (\autoref{tab:ImplVersions}), in t
 	\label{tab:ImplVersions}
 \end{table}
 
-The memory budget of R5 held. Before the dashboards were added, the development node used 3.7 of its 8\,GiB, with Prometheus as the largest consumer at about 490\,MiB. Grafana settled at about 385\,MiB when idle. All platform components have explicit resource requests and limits and run with a single replica.
+The memory budget of R5 held. Before the dashboards were added, the node used 3.7 of its 8\,GiB, with Prometheus as the largest consumer at about 490\,MiB. Grafana settled at about 385\,MiB when idle. All platform components have explicit resource requests and limits and run with a single replica.
 
 %----------------------------------------------------------------------------
 \section{Repositories}
@@ -97,7 +97,7 @@ The root Application uses the app-of-apps pattern: the manifests it applies are 
 	\label{tab:ImplWaves}
 \end{table}
 
-\paragraph{Charts and values.} Third-party components are installed from their Helm charts. Each such Application has two sources: the chart from its public repository, at a pinned version, and the platform repository, referenced as \texttt{\$values}, which supplies a values file~\cite{ArgoCDMultiSource}. The difference between the environments is thereby reduced to small files such as \texttt{values-dev.yaml}, which sets, for example, a Prometheus retention of 24 hours instead of seven days. The applications of this work are plain manifests, organised as a Kustomize base with an overlay per environment.
+\paragraph{Charts and values.} Third-party components are installed from their Helm charts. Each such Application has two sources: the chart from its public repository, at a pinned version, and the platform repository, referenced as \texttt{\$values}, which supplies a values file~\cite{ArgoCDMultiSource}. Settings that belong to the environment rather than to the component are kept in small files such as \texttt{values-dev.yaml}, which sets, for example, a Prometheus retention of 24 hours. The applications of this work are plain manifests, organised as a Kustomize base with an overlay for the environment.
 
 \paragraph{Fields that others own.} Two kinds of objects are changed in the cluster by someone other than Argo CD, and Argo CD must not reset them. istiod rewrites its own validating webhook configuration at run time, and Argo Rollouts rewrites the routes of the demo application's VirtualService during every canary. Both are excluded from comparison with \texttt{ignoreDifferences}~\cite{ArgoCDDiffing}, and the sync option \texttt{RespectIgnoreDifferences} excludes them from synchronisation as well. For the VirtualService, the whole route list \texttt{/spec/http} had to be excluded, not only the first route, because mirroring inserts a managed route in front of the weighted one and shifts its index (\autoref{sec:ImplMirror}). The trade-off is that Argo CD no longer restores the routes if someone edits them by hand; it still manages the host names and gateways of the VirtualService.
 
@@ -125,7 +125,7 @@ The root Application uses the app-of-apps pattern: the manifests it applies are 
 		\texttt{kiali.dev.internal} & Kiali & anonymous, read-only \\
 		\bottomrule
 	\end{tabular}
-	\caption{Services exposed by the development environment.}
+	\caption{Services exposed by the platform.}
 	\label{tab:ImplUIs}
 \end{table}
 
