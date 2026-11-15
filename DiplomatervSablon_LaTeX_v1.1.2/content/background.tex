@@ -2,9 +2,6 @@
 \chapter{Background}
 \label{sec:Background}
 %----------------------------------------------------------------------------
-This chapter introduces the deployment strategies and tools the rest of the thesis builds on. \autoref{sec:DeploymentStrategies} compares the common ways of releasing a new version, \autoref{sec:ArgoRollouts} describes Argo Rollouts, the controller that performs the canary releases, and \autoref{sec:MetricAnalysis} explains how metrics collected by Istio and Prometheus decide whether a release is rolled back.
-
-%----------------------------------------------------------------------------
 \section{Deployment strategies}
 \label{sec:DeploymentStrategies}
 %----------------------------------------------------------------------------
@@ -23,7 +20,7 @@ Progressive delivery strategies expose the new version gradually and check its h
 		\midrule
 		Recreate & all users at once, with downtime & no \\
 		Rolling update & all users, pod by pod & no \\
-		Blue-green & all users after a single switch & on failed checks before the switch \\
+		Blue-green & all users after a single switch & on failed checks \\
 		Canary & a growing share of users & on failed metric checks at any step \\
 		\bottomrule
 	\end{tabular}
