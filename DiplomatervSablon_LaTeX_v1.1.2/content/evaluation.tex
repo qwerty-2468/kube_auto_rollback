@@ -522,6 +522,4 @@ The experiments answered the research questions for one small environment and on
 
 \paragraph{} A functional test before the switch. Every check of the platform looks at request metrics, so a version that answers wrongly with a success status would pass all of them. A functional test, run as a Job next to the load Job of the pre-promotion analysis, could send requests with known correct answers and fail the release on a wrong one.
 
-\paragraph{} Two settings could be improved from the results. The latency threshold of 300\,ms lies inside a bucket of Istio's latency histogram, so its estimate is coarse (\autoref{sec:EvalMetricValidation}); a check on a bucket boundary, the share of requests slower than 250 or 500\,ms, would be exact. The memory check of the post-promotion analysis waits 90\,s for the start-up allocation of a fresh pod, which is not needed when a pre-promotion phase has already run; a shorter delay would catch the leak earlier in B3.
-
 \paragraph{} The platform was evaluated in a single environment. A separate test and production environment, which Argo CD would deploy from a different Git branches once a release has passed the development environment, would add a second stage to the release, and with it the question of which checks are worth repeating in production and which are already covered by the first stage.
