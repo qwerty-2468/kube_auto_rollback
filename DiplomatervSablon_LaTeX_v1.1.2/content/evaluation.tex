@@ -232,7 +232,7 @@ Every check, and every measurement of this chapter, rests on the assumption that
 \subsection{Validation runs}
 \label{sec:EvalV2Validation}
 %----------------------------------------------------------------------------
-Before the matrix, validation runs exercised the runner, the blue-green strategies and the baseline comparison; their results were kept apart from the matrix data. Together with the matrix itself they revealed three problems.
+First, validation runs exercised the runner, the blue-green strategies and the baseline comparison; their results were kept apart from the matrix data. 
 
 \paragraph{} The pre-promotion analysis counts against the progress deadline. The first version of the load Job sent requests for 90\,s, so that the last measurement of the analysis would still have a full minute of load in its window. The healthy release under B2 was then aborted by the progress deadline, 121\,s after it started, while the analysis was still running. In a blue-green release, the time spent in the pre-promotion analysis counts towards \texttt{progressDeadlineSeconds}: the pod start-up and the 90\,s of load together exceeded 120\,s. The load had to be shortened to 60\,s, which still covers the last measurement window, and limited the Job to 90\,s with \texttt{activeDeadlineSeconds}; the repeated run was promoted after 89\,s. The consequence for a real setup is that a longer pre-promotion analysis requires a longer progress deadline, which in turn makes the deadline slower to stop a version that never starts.
 
@@ -275,7 +275,7 @@ Before the first run, I wrote down the expected result of every cell from the co
 Observations from the matrix are the following:
 \begin{itemize}
 	\item No false alarms. All nine healthy releases (F0) were promoted.
-	\item The load Job matches mirroring. B2 and B3 caught exactly the faults that S2 and S4 caught on mirrored traffic, with the same checks, and missed the leak for the same reason: neither has a memory check.
+	\item The load Job matches the goal of mirroring. B2 and B3 caught exactly the faults that S2 and S4 caught on mirrored traffic.
 	\item F2 passes everywhere. In every strategy 2\,\% of errors is below the threshold. Every release of F2 was promoted, with 1--18 failed user requests in the measured window.
 	\item F5 (memory leak) is passed on to the second check in the combined strategies: mirroring let it through to the canary in S4, which caught it at 50\,\%, and the pre-promotion analysis let it through to the post-promotion analysis in B3, which caught it with all users switched.
 \end{itemize}
@@ -309,7 +309,7 @@ Observations from the matrix are the following:
 	\label{tab:EvalTTD}
 \end{table}
 
-In the combined strategies the leak was caught late: after 167\,s in S4 and 162\,s in B3. The time counts from the first mirrored or Job request, so it includes the 70--75\,s of mirroring or pre-promotion, which have no memory check and let the leak through. After that, the canary and the post-promotion analysis needed as long as they do on their own, in S1 and B1. The memory check of the post-promotion analysis waits 90\,s before its first measurement, so that the normal memory growth of a freshly started pod is not mistaken for a leak.
+In the combined strategies, the leak was caught late: after 167\,s in S4 and 162\,s in B3. The time counts from the first mirrored or Job request, so it includes the 70--75\,s of mirroring or pre-promotion, which have no memory check and let the leak through. After that, the canary and the post-promotion analysis needed as long as they do on their own, in S1 and B1. The memory check of the post-promotion analysis waits 90\,s before its first measurement, so that the normal memory growth of a freshly started pod is not mistaken for a leak.
 
 \autoref{fig:EvalScatter} plots the detected runs by time to detect and exposure. They fall into one group per mechanism: mirroring and the pre-promotion analysis at 0\,\%, the baseline comparison and the canary at 10\,\% (the canary at 50\,\% for the leak), and the post-promotion analysis at 100\,\%. Only the checks before the users see the new version detect a fault without exposing anyone, and neither of them caught the leak.
 
@@ -341,13 +341,13 @@ In the combined strategies the leak was caught late: after 167\,s in S4 and 162\
 	\label{fig:EvalScatter}
 \end{figure}
 
-Recovery was fast in every case: once a metric check failed, all traffic was back on the stable version within 0.8--7.9\,s (median 2.3\,s, over the 26 runs caught by a metric). Most of this time is the 2\,s polling interval of the runner, so the true recovery time is likely shorter. In a canary release the stable version keeps running throughout, and in a blue-green release the old version keeps running for 300\,s after the switch, so a rollback only changes routes or selectors; what decides the damage is how long detection takes and how many users are exposed until then.
+Recovery was fast in every case: once a metric check failed, all traffic was back on the stable version within 0.8--7.9\,s (median 2.3\,s, over the 26 runs caught by a metric). Most of this time is the 2\,s polling interval of the runner, so the true recovery time is likely shorter. In a canary release the stable version keeps running throughout, and in a blue-green release the old version keeps running for 300\,s after the switch, so a rollback only changes routes or selectors; what decides, the damage is how long detection takes and how many users are exposed until then.
 
 %----------------------------------------------------------------------------
 \subsection{User impact}
 \label{sec:EvalImpact}
 %----------------------------------------------------------------------------
-\autoref{tab:EvalImpact} shows how many user requests reached the faulty version, and how many of them were affected (an error or slower than 500\,ms). The strategies that check before the users see the new version, by mirroring (S2, S4) or by the load Job (B2, B3), kept every loud fault away from the users entirely. The copies show what users would have experienced instead: of the 126--127 mirrored copies of F1, 40--43 failed, and of the 222--234 Job requests, 62--67 failed, about the configured 30\,\%.
+\autoref{tab:EvalImpact} shows how many user requests reached the faulty version, and how many of them were affected (an error or slower response than 500\,ms). The strategies that check before the users see the new version, by mirroring (S2, S4) or by the load Job (B2, B3), kept every loud fault away from the users entirely. The copies show what users would have experienced instead: of the 126--127 mirrored copies of F1, 40--43 failed, and of the 222--234 Job requests, 62--67 failed, about the configured 30\,\%.
 
 \begin{table}[ht]
 	\footnotesize
@@ -376,15 +376,15 @@ Three results deserve attention.
 
 \paragraph{} A check after the switch costs a full exposure. The post-promotion analysis caught the same faults as the canary in about the same time, but with all users on the faulty version: F1 reached 207 users under B1, 67 of whom received an error, against 34 and 10 under S1. For the leak, 371 user requests were served by the leaking version under B1 and B3, against 67 and 119 under S1 and S4. The leak caused no visible errors in this short window, but it would eventually have exhausted the pod's memory.
 
-\paragraph{} The relative check exposes the fewest users to the leak. The baseline comparison caught F5 after 28 user requests, against 67 for the canary, because its relative memory check needs no long initial delay: the baseline makes the same start-up allocation as the canary, and the difference cancels it out. For the latency faults it also exposed fewer users than the canary (14 and 16 against 19 and 18), and for F1 about as many (29 against 34) despite its slower detection.
+\paragraph{} The relative check exposes the fewest users to the leak. The baseline comparison caught F5 after 28 user requests, against 67 for the canary, because its relative memory check needs no long initial delay: the baseline makes the same start-up allocation as the canary, and the difference cancels it out. For the latency faults, it also exposed fewer users than the canary (14 and 16 against 19 and 18), and for F1 about as many (29 against 34) despite its slower detection.
 
-\paragraph{} A fault below the thresholds reaches everyone, longest with the most checks. F2 was promoted by every strategy. The strategies with more checks merely took longer to promote it, so their windows hold more user requests: 752 under B3 against 113 under S0. Catching it would need a lower error threshold, and a lower threshold needs more requests to tell a 2\,\% fault from chance, for example a statistical comparison with the baseline over a longer window.
+\paragraph{} A fault below the thresholds reaches everyone, with the longest exposure with the most checks. F2 was promoted by every strategy. The strategies with more checks merely took longer to promote it, so their windows hold more user requests: 752 under B3 against 113 under S0. Catching it would need a lower error threshold, and a lower threshold needs more requests to tell a 2\,\% fault from chance, for example, a statistical comparison with the baseline over a longer window.
 
 %----------------------------------------------------------------------------
 \subsection{Time and resource cost of a healthy release}
 \label{sec:EvalCost}
 %----------------------------------------------------------------------------
-\autoref{tab:EvalCost} and \autoref{fig:EvalCost} show the cost of the healthy release, which every strategy pays on every release, faulty or not. A check before the users see the new version costs about 1.6 minutes, both as mirroring and as the load Job, and doubles the requests that the new version handles during that time; in a real system this would also double the load on its downstream dependencies. The canary steps and the post-promotion analysis cost 2.3 and 2.8 minutes. The baseline comparison is the most expensive mechanism, with 3.6 minutes and 7.4 pod-minutes, because of its two extra pods. The combined strategies cost about the sum of their parts: 3.6 minutes for S4 and 4.2 for B3.
+\autoref{tab:EvalCost} and \autoref{fig:EvalCost} show the cost of the healthy release, which every strategy pays on every release, faulty or not. A check before the users see the new version costs about 1.6 minutes, both as mirroring and as the load Job, and doubles the requests that the new version handles during that time; in a real system, this would also double the load on its downstream dependencies. The canary steps and the post-promotion analysis cost 2.3 and 2.8 minutes. The baseline comparison is the most expensive mechanism, with 3.6 minutes and 7.4 pod-minutes, because of its two extra pods. The combined strategies cost about the sum of their parts: 3.6 minutes for S4 and 4.2 for B3.
 
 \begin{table}[ht]
 	\footnotesize
@@ -442,7 +442,7 @@ The progress deadline is the platform's safety net for a version that never star
 \subsection{Root cause}
 \label{sec:EvalDeadlineCause}
 %----------------------------------------------------------------------------
-The hangs occurred in the first step, before the strategies differ, so the cause had to lie in the state of the cluster before the release. After the matrix, both applications had old, empty ReplicaSets with a \texttt{scale-down-deadline} annotation whose time had long passed. The controller adds this annotation when it aborts a release, to keep the aborted version running for a short delay before scaling it down.
+The hangs occurred in the first step, before the strategies differ, so the cause had to lie in the state of the cluster before the release. After the trials, both applications had old, empty ReplicaSets with a \texttt{scale-down-deadline} annotation whose time had long passed. The controller adds this annotation when it aborts a release, to keep the aborted version running for a short delay before scaling it down.
 
 In the source code of the controller~\cite{ArgoRolloutsSource}, the deadline is evaluated only when the following guard is true:
 \begin{lstlisting}[caption={The guard of the progress-deadline check in rollout/sync.go (Argo Rollouts v1.10.1).},label=lst:EvalGuard]
@@ -458,7 +458,7 @@ case !isIndefiniteStep(c.rollout) &&
 %----------------------------------------------------------------------------
 The problem is known: issue \#4971 of Argo Rollouts~\cite{ArgoRolloutsIssue4971} describes the same guard kept false by a stale annotation, and a proposed fix~\cite{ArgoRolloutsPR4972}, not yet merged at the time of writing, makes the function ignore deadlines that have already passed. The issue reaches the stale state by leaving an aborted release alone until its delay expires; the experiments of this work show that an ordinary GitOps rollback after an abort leads to the same state, so it is likely to occur in practice.
 
-For the platform this means that the progress deadline cannot be the only protection against a version that does not start. Since the failure is silent, an alert on releases that stay \emph{Progressing} too long is needed, and until the fix is released, the stale annotation can be removed after an abort (\texttt{kubectl annotate rs <name> scale-down-deadline-}).
+For the platform, this means that the progress deadline cannot be the only protection against a version that does not start. Since the failure is silent, an alert on releases that stay \emph{Progressing} too long is needed, and until the fix is released, the stale annotation can be removed after an abort (\texttt{kubectl annotate rs <name> scale-down-deadline-}).
 
 %----------------------------------------------------------------------------
 \section{Discussion}
@@ -476,13 +476,13 @@ Each mechanism has a clear profile. The checks before the users see the new vers
 \subsection{RQ2: User exposure and cost of a healthy release}
 \label{sec:EvalRQ2}
 %----------------------------------------------------------------------------
-Protection is paid for in time and resources on every release, and the healthy release shows the price. A check before the users costs about 1.6 minutes, the canary steps 2.3 and the post-promotion analysis 2.8 minutes; the combinations cost about the sum of their parts, 3.6 minutes for S4 and 4.2 for B3. The baseline comparison costs the most, 3.6 minutes and more than three times the pod-minutes of the canary. In exposure the cost is fault-specific: a check before the users reduced the users exposed to loud faults to zero, a check after the switch raised it to 100\,\%.
+Protection is paid for in time and resources on every release, and the healthy release shows the price. A check before users' exposure costs about 1.6 minutes, the canary steps 2.3 and the post-promotion analysis 2.8 minutes; the combinations cost about the sum of their parts, 3.6 minutes for S4 and 4.2 for B3. The baseline comparison costs the most, 3.6 minutes and more than three times the pod-minutes of the canary.
 
 %----------------------------------------------------------------------------
 \subsection{RQ3: Absolute versus relative checks}
 \label{sec:EvalRQ3}
 %----------------------------------------------------------------------------
-In these experiments neither approach produced a false alarm, and both caught the same faults: the relative check was not better at avoiding misses. The difference was in timing and exposure. Because a fresh baseline makes the same start-up allocation as the canary, the relative memory check can start without the long delay of the absolute one, and caught the leak after 28 user requests at 10\,\%, against 67 at up to 50\,\% for the canary. Its weakness is the number of samples: at 10\,\%, a single measurement sees only a few requests, and its error check needed one interval more than its latency check. A relative check also has a blind spot of its own: if both versions are bad, for example because of a broken dependency, their difference is small. The absolute checks should therefore stay as a floor.
+In these experiments, neither approach produced a false alarm, and both caught the same faults: the relative check was not better at avoiding misses. The difference was in timing and exposure. Because a fresh baseline makes the same start-up allocation as the canary, the relative memory check can start without the long delay of the absolute one, and caught the leak after 28 user requests at 10\,\%, against 67 at up to 50\,\% for the canary. Its weakness is the number of samples: at 10\,\%, a single measurement sees only a few requests, and its error check needed one interval more than its latency check. A relative check also has a blind spot of its own: if both versions are bad, for example because of a broken dependency, their difference is small. The absolute checks should therefore remain as a floor.
 
 %----------------------------------------------------------------------------
 \subsection{RQ4: Benefit and cost of combined mechanisms}
@@ -494,16 +494,16 @@ Combining mechanisms helps where a later mechanism catches what an earlier one m
 \subsection{RQ5: Blue-green compared with the canary}
 \label{sec:EvalRQ5}
 %----------------------------------------------------------------------------
-Blue-green inverts the risk profile of the canary. Before the switch it exposes nobody, and with generated load the same metric checks as mirroring catch the same faults in the same time (B2 against S2). After the switch every user is exposed, so whatever the checks before the switch miss reaches all users at once: the post-promotion analysis caught the leak after 371 user requests, against 119 in the canary of S4. Without a check before the switch (B1), even the loud faults reached everyone, with six times as many failed requests as under the canary. Its rollback was as fast as the canary's, because the old version keeps running. Blue-green is therefore attractive where a meaningful check before the switch exists, and weak against faults that appear only after some time under real load. Two properties of the blue-green strategy matter for its configuration: the pre-promotion analysis counts against the progress deadline, so a longer analysis needs a longer deadline, and the scale-down delay that makes the rollback instant also delays the deadline of the next release.
+Blue-green inverts the risk profile of the canary. Before the switch, it exposes nobody, and with generated load the same metric checks as mirroring catch the same faults in the same time (B2 against S2). After the switch, every user is exposed, so whatever the checks before the switch miss reaches all users at once: the post-promotion analysis caught the leak after 371 user requests, against 119 in the canary of S4. Without a check before the switch (B1), even the loud faults reached everyone, with six times as many failed requests as under the canary. Its rollback was as fast as the canary's, because the old version keeps running. Blue-green is therefore attractive where a meaningful check before the switch exists, and weak against faults that appear only after some time under real load. Two properties of the blue-green strategy matter for its configuration: the pre-promotion analysis counts against the progress deadline, so a longer analysis needs a longer deadline, and the scale-down delay that makes the rollback instant also delays the deadline of the next release.
 
 %----------------------------------------------------------------------------
-\subsection{Defence in depth and a decision guide}
+\subsection{Choosing the Appropriate mechanism}
 \label{sec:EvalDecisionGuide}
 %----------------------------------------------------------------------------
 No single mechanism caught every fault, and the strategies that combine complementary mechanisms (a check before the users for loud faults, and a check under real traffic or a relative check for slow ones) caught the most with the least exposure. The results suggest the following choices:
 \begin{itemize}
 	\item a service whose users must not see errors: a check before the users, mirroring before the canary (S4) or a load Job before a blue-green switch (B3);
-	\item slow faults expected: a canary or a baseline comparison at a small weight, which catch the leak before most users see it; in blue-green, only the post-promotion analysis sees it, with every user;
+	\item slow faults expected: a canary or a baseline comparison at a small weight, which catches the fault before most users see it; in blue-green, only the post-promotion analysis sees it, with every user;
 	\item limited resources or frequent releases: the canary alone (S1);
 	\item in every case: an alert on releases that stay \emph{Progressing} too long, because the progress deadline cannot be relied on alone (\autoref{sec:EvalDeadline}).
 \end{itemize}
@@ -512,9 +512,9 @@ No single mechanism caught every fault, and the strategies that combine compleme
 \section{Future work}
 \label{sec:EvalFutureWork}
 %----------------------------------------------------------------------------
-The experiments answered the research questions for one small environment and only some kind of faults. They also point to several extensions, both of the evaluation and of the platform itself.
+The experiments answered the research questions for one small environment and only some kind of faults. Several extensions are listed in the following, both for the evaluation and for the platform itself.
 
-\paragraph{} Each cell of the matrix was run once. Most outcomes follow from the configuration, such as the thresholds, delays and the order of the steps, and are expected to repeat, but the random ones rest on a single run, for example the slower detection of F1 by the baseline comparison. Repeating every cell would give the spread of the detection times and of the user impact. The environment should also grow: several replicas per version, several nodes, and more traffic to more than one endpoint. With more requests per measurement window, the checks become less noisy and could use stricter thresholds without false alarms, and node failures and the rescheduling of pods during a release could be tested as well.
+\paragraph{} Each cell of the matrix was run once. Most outcomes follow from the configuration, such as the thresholds, delays and the order of the steps, and are expected to repeat, but the random ones rest on a single run, for example, the slower detection of F1 by the baseline comparison. Repeating every cell would give the spread of the detection times and of the user impact. The environment should also grow: several replicas per version, several nodes, and more traffic to more than one endpoint. With more requests per measurement window, the checks become less noisy and could use stricter thresholds without false alarms, and node failures and the rescheduling of pods during a release could be tested as well.
 
 \paragraph{} All faults of this work were in the release itself, while the cluster and the dependencies were healthy. The main expected advantage of relative analysis lies elsewhere: when the whole environment degrades, for example a node under CPU pressure or a slow database, an absolute check aborts even a healthy release, while the baseline comparison should pass it, because the baseline is affected in the same way. A healthy release under injected CPU pressure, run under S1 and S3, would test this directly.
 
@@ -522,4 +522,4 @@ The experiments answered the research questions for one small environment and on
 
 \paragraph{} A functional test before the switch. Every check of the platform looks at request metrics, so a version that answers wrongly with a success status would pass all of them. A functional test, run as a Job next to the load Job of the pre-promotion analysis, could send requests with known correct answers and fail the release on a wrong one.
 
-\paragraph{} The platform was evaluated in a single environment. A separate test and production environment, which Argo CD would deploy from a different Git branches once a release has passed the development environment, would add a second stage to the release, and with it the question of which checks are worth repeating in production and which are already covered by the first stage.
+\paragraph{} The platform was evaluated in a single environment. A separate test and production environment, which Argo CD would deploy from different Git branches once a release has passed the development environment, would add a second stage to the release, and with it the question of which checks are worth repeating in production and which are already covered by the first stage.
